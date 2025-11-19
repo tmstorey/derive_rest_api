@@ -5,6 +5,11 @@ version = 4
 [[package]]
 name = "derive_rest_api"
 version = "0.1.0"
+dependencies = [
+ "derive_rest_api_macros",
+ "serde",
+ "serde_qs",
+]
 
 [[package]]
 name = "derive_rest_api_macros"

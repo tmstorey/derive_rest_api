@@ -45,6 +45,8 @@ struct FieldAttributes {
     validate: Option<syn::Path>,
     /// Where this field should go in the request
     kind: FieldKind,
+    /// Custom name for this field (for headers, query params, etc.)
+    rename: Option<String>,
 }
 
 #[proc_macro_derive(RequestBuilder, attributes(request_builder))]
@@ -287,8 +289,20 @@ fn generate_request_builder(input: syn::DeriveInput) -> syn::Result<proc_macro2:
             let query_struct_fields = query_fields.iter().map(|field| {
                 let field_name = &field.ident;
                 let field_type = &field.ty;
+
+                // Extract serde attributes from the original field
+                let serde_attrs = extract_serde_attributes(&field.attrs);
+
+                // Check if we need to add skip_serializing_if
+                let skip_attr = if option_inner_type(field_type).is_some() {
+                    quote::quote! { #[serde(skip_serializing_if = "Option::is_none")] }
+                } else {
+                    quote::quote! {}
+                };
+
                 quote::quote! {
-                    #[serde(skip_serializing_if = "Option::is_none")]
+                    #(#serde_attrs)*
+                    #skip_attr
                     #field_name: #field_type
                 }
             });
@@ -347,6 +361,166 @@ fn generate_request_builder(input: syn::DeriveInput) -> syn::Result<proc_macro2:
             quote::quote! {}
         };
 
+        // Collect body fields (fields with #[request_builder(body)])
+        let body_fields: Vec<_> = fields.iter().filter(|field| {
+            if let Ok(attrs) = parse_field_attributes(&field.attrs) {
+                attrs.kind == FieldKind::Body
+            } else {
+                false
+            }
+        }).collect();
+
+        // Collect header fields (fields with #[request_builder(header)])
+        let header_fields: Vec<_> = fields.iter().filter(|field| {
+            if let Ok(attrs) = parse_field_attributes(&field.attrs) {
+                attrs.kind == FieldKind::Header
+            } else {
+                false
+            }
+        }).collect();
+
+        // Generate build_body() method if there are body fields
+        let build_body_method = if !body_fields.is_empty() {
+            // Generate struct definition for body parameters
+            let body_struct_fields = body_fields.iter().map(|field| {
+                let field_name = &field.ident;
+                let field_type = &field.ty;
+
+                // Extract serde attributes from the original field
+                let serde_attrs = extract_serde_attributes(&field.attrs);
+
+                // Only add skip_serializing_if for Option types
+                let skip_attr = if option_inner_type(field_type).is_some() {
+                    quote::quote! { #[serde(skip_serializing_if = "Option::is_none")] }
+                } else {
+                    quote::quote! {}
+                };
+
+                quote::quote! {
+                    #(#serde_attrs)*
+                    #skip_attr
+                    #field_name: #field_type
+                }
+            });
+
+            // Generate field assignments from self
+            let body_field_assignments = body_fields.iter().map(|field| {
+                let field_name = &field.ident;
+
+                // All fields are cloned directly - no wrapping in Option
+                quote::quote! {
+                    #field_name: self.#field_name.clone()
+                }
+            });
+
+            quote::quote! {
+                #[doc = "Builds the request body by serializing body fields to JSON."]
+                #[doc = ""]
+                #[doc = "# Errors"]
+                #[doc = ""]
+                #[doc = "Returns an error if JSON serialization fails."]
+                pub fn build_body(&self) -> std::result::Result<std::option::Option<std::vec::Vec<u8>>, std::string::String> {
+                    #[derive(serde::Serialize)]
+                    struct BodyParams {
+                        #(#body_struct_fields),*
+                    }
+
+                    let body_params = BodyParams {
+                        #(#body_field_assignments),*
+                    };
+
+                    let json = serde_json::to_vec(&body_params)
+                        .map_err(|e| format!("Failed to serialize request body: {}", e))?;
+
+                    std::result::Result::Ok(std::option::Option::Some(json))
+                }
+            }
+        } else {
+            quote::quote! {
+                #[doc = "Builds the request body (no body fields defined)."]
+                pub fn build_body(&self) -> std::result::Result<std::option::Option<std::vec::Vec<u8>>, std::string::String> {
+                    std::result::Result::Ok(std::option::Option::None)
+                }
+            }
+        };
+
+        // Generate build_headers() method if there are header fields
+        let build_headers_method = if !header_fields.is_empty() {
+            let header_insertions = header_fields.iter().map(|field| {
+                let field_name = &field.ident;
+                let field_name_str = field_name.as_ref().unwrap().to_string();
+                let field_type = &field.ty;
+
+                // Determine the header name to use
+                let field_attrs = parse_field_attributes(&field.attrs).unwrap_or_default();
+                let header_name = if let Some(custom_name) = field_attrs.rename {
+                    // Use custom name if specified
+                    custom_name
+                } else {
+                    // Convert snake_case to Title-Case
+                    snake_to_title_case(&field_name_str)
+                };
+
+                if option_inner_type(field_type).is_some() {
+                    // Optional header
+                    quote::quote! {
+                        if let std::option::Option::Some(ref value) = self.#field_name {
+                            headers.insert(#header_name.to_string(), value.to_string());
+                        }
+                    }
+                } else {
+                    // Required header
+                    quote::quote! {
+                        headers.insert(#header_name.to_string(), self.#field_name.to_string());
+                    }
+                }
+            });
+
+            quote::quote! {
+                #[doc = "Builds HTTP headers from header fields."]
+                pub fn build_headers(&self) -> std::collections::HashMap<std::string::String, std::string::String> {
+                    let mut headers = std::collections::HashMap::new();
+                    #(#header_insertions)*
+                    headers
+                }
+            }
+        } else {
+            quote::quote! {
+                #[doc = "Builds HTTP headers (no header fields defined)."]
+                pub fn build_headers(&self) -> std::collections::HashMap<std::string::String, std::string::String> {
+                    std::collections::HashMap::new()
+                }
+            }
+        };
+
+        // Generate send_with_client() method
+        let method_value = struct_attrs.method.as_ref().map(|s| s.as_str()).unwrap_or("GET");
+        let send_with_client_method = quote::quote! {
+            #[doc = "Sends the HTTP request using the provided client."]
+            #[doc = ""]
+            #[doc = "# Arguments"]
+            #[doc = ""]
+            #[doc = "- `client`: An implementation of the `HttpClient` trait"]
+            #[doc = "- `base_url`: The base URL to prepend to the request path"]
+            #[doc = ""]
+            #[doc = "# Errors"]
+            #[doc = ""]
+            #[doc = "Returns an error if URL building, body serialization, or the HTTP request fails."]
+            pub fn send_with_client<C: derive_rest_api::HttpClient>(
+                &self,
+                client: &C,
+                base_url: &str,
+            ) -> std::result::Result<std::vec::Vec<u8>, std::string::String> {
+                let path = self.build_url().map_err(|e| format!("Failed to build URL: {}", e))?;
+                let url = format!("{}{}", base_url, path);
+                let headers = self.build_headers();
+                let body = self.build_body()?;
+
+                client.send(#method_value, &url, headers, body)
+                    .map_err(|e| format!("HTTP request failed: {:?}", e))
+            }
+        };
+
         quote::quote! {
             impl #struct_name {
                 #[doc = "Builds the URL path by substituting path parameters and appending query string."]
@@ -360,6 +534,12 @@ fn generate_request_builder(input: syn::DeriveInput) -> syn::Result<proc_macro2:
                     #query_serialization
                     std::result::Result::Ok(path)
                 }
+
+                #build_body_method
+
+                #build_headers_method
+
+                #send_with_client_method
             }
         }
     } else {
@@ -522,21 +702,36 @@ fn parse_field_attributes(attrs: &[syn::Attribute]) -> syn::Result<FieldAttribut
                 return Ok(());
             }
 
-            // #[request_builder(query)]
+            // #[request_builder(query)] or #[request_builder(query = "name")]
             if meta.path.is_ident("query") {
                 result.kind = FieldKind::Query;
+                if meta.input.peek(syn::Token![=]) {
+                    let value = meta.value()?;
+                    let name: syn::LitStr = value.parse()?;
+                    result.rename = Some(name.value());
+                }
                 return Ok(());
             }
 
-            // #[request_builder(body)]
+            // #[request_builder(body)] or #[request_builder(body = "name")]
             if meta.path.is_ident("body") {
                 result.kind = FieldKind::Body;
+                if meta.input.peek(syn::Token![=]) {
+                    let value = meta.value()?;
+                    let name: syn::LitStr = value.parse()?;
+                    result.rename = Some(name.value());
+                }
                 return Ok(());
             }
 
-            // #[request_builder(header)]
+            // #[request_builder(header)] or #[request_builder(header = "Authorization")]
             if meta.path.is_ident("header") {
                 result.kind = FieldKind::Header;
+                if meta.input.peek(syn::Token![=]) {
+                    let value = meta.value()?;
+                    let name: syn::LitStr = value.parse()?;
+                    result.rename = Some(name.value());
+                }
                 return Ok(());
             }
 
@@ -597,4 +792,33 @@ fn extract_path_params(path: &str) -> Vec<String> {
     }
 
     params
+}
+
+/// Extract serde attributes to copy to generated structs
+fn extract_serde_attributes(attrs: &[syn::Attribute]) -> Vec<syn::Attribute> {
+    attrs
+        .iter()
+        .filter(|attr| {
+            // Keep serde attributes
+            attr.path().is_ident("serde")
+        })
+        .cloned()
+        .collect()
+}
+
+/// Convert snake_case to Title-Case for HTTP headers
+/// For example: "authorization" -> "Authorization", "content_type" -> "Content-Type"
+fn snake_to_title_case(s: &str) -> String {
+    s.split('_')
+        .map(|word| {
+            let mut chars = word.chars();
+            match chars.next() {
+                None => String::new(),
+                Some(first) => {
+                    first.to_uppercase().collect::<String>() + &chars.as_str().to_lowercase()
+                }
+            }
+        })
+        .collect::<Vec<_>>()
+        .join("-")
 }

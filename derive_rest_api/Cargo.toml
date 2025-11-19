@@ -4,3 +4,8 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+derive_rest_api_macros = { path = "../derive_rest_api_macros" }
+
+[dev-dependencies]
+serde = { version = "1.0", features = ["derive"] }
+serde_qs = "1.0.0-rc.3"

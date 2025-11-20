@@ -4,6 +4,7 @@
 
 mod api_client;
 mod request_builder;
+mod utils;
 
 /// Derive macro for generating a builder pattern for REST API requests.
 ///

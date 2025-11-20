@@ -282,7 +282,7 @@ fn generate_send_with_client_method(struct_attrs: &StructAttributes) -> TokenStr
             let headers = self.build_headers();
             let body = self.build_body()?;
 
-            client.send(#method_value, &url, headers, body)
+            client.send(#method_value, &url, headers, body, std::option::Option::None)
                 .map_err(|e| derive_rest_api::RequestError::http_error(e))
         }
     }

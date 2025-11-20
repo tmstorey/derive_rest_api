@@ -63,6 +63,7 @@ fn test_client_struct_generation() {
             _url: &str,
             _headers: std::collections::HashMap<String, String>,
             _body: Option<Vec<u8>>,
+            _timeout: Option<std::time::Duration>,
         ) -> Result<Vec<u8>, Self::Error> {
             Ok(vec![])
         }
@@ -91,6 +92,7 @@ fn test_async_client_struct_generation() {
             _url: &str,
             _headers: std::collections::HashMap<String, String>,
             _body: Option<Vec<u8>>,
+            _timeout: Option<std::time::Duration>,
         ) -> Result<Vec<u8>, Self::Error> {
             Ok(vec![])
         }
@@ -114,6 +116,7 @@ fn test_method_generation() {
             _url: &str,
             _headers: std::collections::HashMap<String, String>,
             _body: Option<Vec<u8>>,
+            _timeout: Option<std::time::Duration>,
         ) -> Result<Vec<u8>, Self::Error> {
             Ok(vec![])
         }
@@ -143,6 +146,7 @@ fn test_with_base_url() {
             _url: &str,
             _headers: std::collections::HashMap<String, String>,
             _body: Option<Vec<u8>>,
+            _timeout: Option<std::time::Duration>,
         ) -> Result<Vec<u8>, Self::Error> {
             Ok(vec![])
         }
@@ -185,6 +189,7 @@ fn test_config_suffix_stripping() {
             _url: &str,
             _headers: std::collections::HashMap<String, String>,
             _body: Option<Vec<u8>>,
+            _timeout: Option<std::time::Duration>,
         ) -> Result<Vec<u8>, Self::Error> {
             Ok(vec![])
         }

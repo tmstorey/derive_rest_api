@@ -24,6 +24,7 @@ impl derive_rest_api::HttpClient for MockClient {
         _url: &str,
         _headers: std::collections::HashMap<String, String>,
         _body: Option<Vec<u8>>,
+        _timeout: Option<std::time::Duration>,
     ) -> Result<Vec<u8>, Self::Error> {
         Ok(vec![])
     }

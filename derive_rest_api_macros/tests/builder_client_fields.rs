@@ -26,6 +26,7 @@ impl derive_rest_api::HttpClient for MockHttpClient {
         _url: &str,
         _headers: HashMap<String, String>,
         _body: Option<Vec<u8>>,
+        _timeout: Option<std::time::Duration>,
     ) -> Result<Vec<u8>, Self::Error> {
         Ok(b"{\"id\":1}".to_vec())
     }
@@ -44,6 +45,7 @@ impl derive_rest_api::AsyncHttpClient for MockAsyncHttpClient {
         _url: &str,
         _headers: HashMap<String, String>,
         _body: Option<Vec<u8>>,
+        _timeout: Option<std::time::Duration>,
     ) -> Result<Vec<u8>, Self::Error> {
         Ok(b"{\"id\":1}".to_vec())
     }

@@ -92,6 +92,7 @@ pub(crate) fn generate_request_builder(input: syn::DeriveInput) -> syn::Result<p
             __async_http_client: std::option::Option<__A>,
             __base_url: std::option::Option<std::string::String>,
             __dynamic_headers: std::collections::HashMap<std::string::String, std::string::String>,
+            __timeout: std::option::Option<std::time::Duration>,
         }
 
         impl #builder_name<(), ()> {
@@ -103,6 +104,7 @@ pub(crate) fn generate_request_builder(input: syn::DeriveInput) -> syn::Result<p
                     __async_http_client: std::option::Option::None,
                     __base_url: std::option::Option::None,
                     __dynamic_headers: std::collections::HashMap::new(),
+                    __timeout: std::option::Option::None,
                 }
             }
         }
@@ -116,6 +118,7 @@ pub(crate) fn generate_request_builder(input: syn::DeriveInput) -> syn::Result<p
                     __async_http_client: self.__async_http_client,
                     __base_url: self.__base_url,
                     __dynamic_headers: self.__dynamic_headers,
+                    __timeout: self.__timeout,
                 }
             }
 
@@ -127,6 +130,7 @@ pub(crate) fn generate_request_builder(input: syn::DeriveInput) -> syn::Result<p
                     __async_http_client: std::option::Option::Some(client),
                     __base_url: self.__base_url,
                     __dynamic_headers: self.__dynamic_headers,
+                    __timeout: self.__timeout,
                 }
             }
 
@@ -141,6 +145,11 @@ pub(crate) fn generate_request_builder(input: syn::DeriveInput) -> syn::Result<p
         impl<__C, __A> derive_rest_api::RequestModifier for #builder_name<__C, __A> {
             fn header(mut self, name: impl std::convert::Into<std::string::String>, value: impl std::convert::Into<std::string::String>) -> Self {
                 self.__dynamic_headers.insert(name.into(), value.into());
+                self
+            }
+
+            fn timeout(mut self, timeout: std::time::Duration) -> Self {
+                self.__timeout = std::option::Option::Some(timeout);
                 self
             }
         }

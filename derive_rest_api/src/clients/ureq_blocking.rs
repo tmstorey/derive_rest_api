@@ -71,6 +71,7 @@ impl HttpClient for UreqBlockingClient {
         url: &str,
         headers: HashMap<String, String>,
         body: Option<Vec<u8>>,
+        timeout: Option<std::time::Duration>,
     ) -> Result<Vec<u8>, Self::Error> {
         // Create the request based on the HTTP method
         let mut request = match method.to_uppercase().as_str() {
@@ -86,6 +87,11 @@ impl HttpClient for UreqBlockingClient {
         // Add headers
         for (key, value) in headers {
             request = request.set(&key, &value);
+        }
+
+        // Add timeout if present
+        if let Some(timeout_duration) = timeout {
+            request = request.timeout(timeout_duration);
         }
 
         // Send the request with or without body

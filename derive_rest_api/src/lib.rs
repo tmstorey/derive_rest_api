@@ -2,15 +2,21 @@
 //!
 //! A procedural macro library for generating type-safe builder patterns for REST API request structures.
 //!
-//! This library provides the `RequestBuilder` derive macro that automatically creates builder structs
-//! with support for:
+//! This library provides two derive macros:
+//! - `RequestBuilder` - Generates builder patterns for individual API requests
+//! - `ApiClient` - Generates high-level client structs that wrap multiple requests
+//!
+//! ## Features
+//!
 //! - URL path parameter templating
 //! - Query string serialization
 //! - Field validation
 //! - Flexible type conversion with `Into<T>`
 //! - Default value handling
+//! - Type-safe error handling with `thiserror`
+//! - Support for multiple HTTP client backends (reqwest, ureq, or custom)
 //!
-//! ## Example
+//! ## Basic RequestBuilder Example
 //!
 //! ```rust
 //! use derive_rest_api::RequestBuilder;
@@ -34,6 +40,64 @@
 //!
 //! assert_eq!(request.id, 123);
 //! assert_eq!(request.include_posts, Some(true));
+//! ```
+//!
+//! ## ApiClient Example
+//!
+//! For a more ergonomic API, use `#[derive(ApiClient)]` to generate a high-level client:
+//!
+//! ```rust,ignore
+//! use derive_rest_api::{ApiClient, RequestBuilder, ReqwestBlockingClient};
+//! use serde::Serialize;
+//!
+//! #[derive(RequestBuilder, Serialize)]
+//! #[request_builder(method = "GET", path = "/users/{id}")]
+//! struct GetUser {
+//!     id: u64,
+//! }
+//!
+//! #[derive(RequestBuilder, Serialize)]
+//! #[request_builder(method = "POST", path = "/users")]
+//! struct CreateUser {
+//!     #[request_builder(body)]
+//!     name: String,
+//! }
+//!
+//! #[derive(Clone, ApiClient)]
+//! #[api_client(
+//!     base_url = "https://api.example.com",
+//!     requests(GetUser, CreateUser = "new_user")
+//! )]
+//! struct MyApiConfig {
+//!     api_key: String,
+//! }
+//!
+//! // Usage:
+//! let config = MyApiConfig { api_key: "key".to_string() };
+//! let client = MyApiClient::new(config, ReqwestBlockingClient::new()?);
+//!
+//! // Methods are pre-configured with base URL and HTTP client
+//! let user = client.get_user().id(123).send()?;
+//! let new_user = client.new_user().name("Alice".to_string()).send()?;
+//! ```
+//!
+//! ## Error Handling
+//!
+//! All operations return `Result<T, RequestError>` with specific error variants:
+//!
+//! ```rust,ignore
+//! use derive_rest_api::{RequestBuilder, RequestError};
+//!
+//! match request.build() {
+//!     Ok(req) => { /* ... */ },
+//!     Err(RequestError::MissingField { field }) => {
+//!         eprintln!("Missing field: {}", field);
+//!     }
+//!     Err(RequestError::ValidationError { field, message }) => {
+//!         eprintln!("Validation failed for {}: {}", field, message);
+//!     }
+//!     Err(e) => eprintln!("Error: {}", e),
+//! }
 //! ```
 //!
 //! ## Struct-level Attributes

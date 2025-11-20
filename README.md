@@ -238,7 +238,15 @@ let client = MyApiClient::new(config, http_client);
 client.get_user().id(123).send()?; // X-API-Key and User-Agent are auto-applied
 ```
 
-If your config doesn't need to modify requests, implement `NoRequestConfiguration`:
+**Note**: If your config struct has no fields (unit struct, empty struct, or empty tuple struct), `NoRequestConfiguration` is automatically implemented for you! For example:
+
+```rust
+#[derive(Clone, ApiClient)]
+#[api_client(base_url = "...", requests(...))]
+struct SimpleConfig;  // Automatically gets NoRequestConfiguration!
+```
+
+If your config has fields but doesn't need to modify requests, manually implement `NoRequestConfiguration`:
 
 ```rust
 struct SimpleConfig {

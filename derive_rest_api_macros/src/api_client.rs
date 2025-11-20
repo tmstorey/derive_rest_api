@@ -14,6 +14,27 @@ pub(crate) fn generate_api_client(input: syn::DeriveInput) -> syn::Result<TokenS
     // Parse the api_client attribute
     let attrs = parse_api_client_attributes(&input.attrs)?;
 
+    // Check if this is a unit struct or empty struct (no fields)
+    let is_unit_or_empty = match &input.data {
+        syn::Data::Struct(data_struct) => {
+            match &data_struct.fields {
+                syn::Fields::Unit => true,  // Unit struct: `struct Foo;`
+                syn::Fields::Named(fields) => fields.named.is_empty(),  // Empty struct: `struct Foo {}`
+                syn::Fields::Unnamed(fields) => fields.unnamed.is_empty(),  // Empty tuple struct: `struct Foo();`
+            }
+        }
+        _ => false,
+    };
+
+    // Generate automatic NoRequestConfiguration impl for unit/empty structs
+    let no_config_impl = if is_unit_or_empty {
+        quote! {
+            impl derive_rest_api::NoRequestConfiguration for #struct_name {}
+        }
+    } else {
+        quote! {}
+    };
+
     // Generate client struct names
     let client_name = generate_client_name(struct_name);
     let async_client_name = generate_async_client_name(struct_name);
@@ -33,6 +54,7 @@ pub(crate) fn generate_api_client(input: syn::DeriveInput) -> syn::Result<TokenS
     );
 
     Ok(quote! {
+        #no_config_impl
         #blocking_client
         #async_client
     })

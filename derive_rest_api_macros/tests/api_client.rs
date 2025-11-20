@@ -1,5 +1,17 @@
 use derive_rest_api_macros::{ApiClient, RequestBuilder};
 
+// Mock error type for testing
+#[derive(Debug)]
+struct MockError(String);
+
+impl std::fmt::Display for MockError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+impl std::error::Error for MockError {}
+
 // Mock request structs
 #[derive(RequestBuilder)]
 #[request_builder(method = "GET", path = "/users/{id}")]
@@ -41,7 +53,7 @@ fn test_client_struct_generation() {
     #[derive(Clone)]
     struct MockClient;
     impl derive_rest_api::HttpClient for MockClient {
-        type Error = String;
+        type Error = MockError;
         fn send(
             &self,
             _method: &str,
@@ -69,7 +81,7 @@ fn test_async_client_struct_generation() {
     #[derive(Clone)]
     struct MockAsyncClient;
     impl derive_rest_api::AsyncHttpClient for MockAsyncClient {
-        type Error = String;
+        type Error = MockError;
         async fn send_async(
             &self,
             _method: &str,
@@ -96,7 +108,7 @@ fn test_method_generation() {
     #[derive(Clone)]
     struct MockClient;
     impl derive_rest_api::HttpClient for MockClient {
-        type Error = String;
+        type Error = MockError;
         fn send(
             &self,
             _method: &str,
@@ -125,7 +137,7 @@ fn test_with_base_url() {
     #[derive(Clone)]
     struct MockClient;
     impl derive_rest_api::HttpClient for MockClient {
-        type Error = String;
+        type Error = MockError;
         fn send(
             &self,
             _method: &str,
@@ -164,7 +176,7 @@ fn test_config_suffix_stripping() {
     #[derive(Clone)]
     struct MockClient;
     impl derive_rest_api::HttpClient for MockClient {
-        type Error = String;
+        type Error = MockError;
         fn send(
             &self,
             _method: &str,

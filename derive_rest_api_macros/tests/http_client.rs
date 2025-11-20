@@ -2,6 +2,18 @@ use derive_rest_api_macros::RequestBuilder;
 use serde::Serialize;
 use std::collections::HashMap;
 
+// Mock error type for testing
+#[derive(Debug)]
+struct MockError(String);
+
+impl std::fmt::Display for MockError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+impl std::error::Error for MockError {}
+
 // Mock HTTP client for testing
 #[derive(Clone)]
 struct MockHttpClient {
@@ -17,7 +29,7 @@ impl MockHttpClient {
 }
 
 impl derive_rest_api::HttpClient for MockHttpClient {
-    type Error = String;
+    type Error = MockError;
 
     fn send(
         &self,

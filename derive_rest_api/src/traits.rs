@@ -13,11 +13,22 @@ use std::collections::HashMap;
 /// use derive_rest_api::HttpClient;
 /// use std::collections::HashMap;
 ///
+/// #[derive(Debug)]
+/// struct MyError;
+///
+/// impl std::fmt::Display for MyError {
+///     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+///         write!(f, "MyError")
+///     }
+/// }
+///
+/// impl std::error::Error for MyError {}
+///
 /// #[derive(Clone)]
 /// struct MyClient;
 ///
 /// impl HttpClient for MyClient {
-///     type Error = String;
+///     type Error = MyError;
 ///
 ///     fn send(
 ///         &self,
@@ -33,7 +44,7 @@ use std::collections::HashMap;
 /// ```
 pub trait HttpClient: Clone {
     /// The error type for this HTTP client
-    type Error: std::fmt::Debug;
+    type Error: std::error::Error + Send + Sync + 'static;
 
     /// Send a blocking HTTP request with the given parameters
     ///
@@ -67,11 +78,22 @@ pub trait HttpClient: Clone {
 /// use derive_rest_api::AsyncHttpClient;
 /// use std::collections::HashMap;
 ///
+/// #[derive(Debug)]
+/// struct MyError;
+///
+/// impl std::fmt::Display for MyError {
+///     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+///         write!(f, "MyError")
+///     }
+/// }
+///
+/// impl std::error::Error for MyError {}
+///
 /// #[derive(Clone)]
 /// struct MyAsyncClient;
 ///
 /// impl AsyncHttpClient for MyAsyncClient {
-///     type Error = String;
+///     type Error = MyError;
 ///
 ///     async fn send_async(
 ///         &self,
@@ -87,7 +109,7 @@ pub trait HttpClient: Clone {
 /// ```
 pub trait AsyncHttpClient: Clone  {
     /// The error type for this HTTP client
-    type Error: std::fmt::Debug;
+    type Error: std::error::Error + Send + Sync + 'static;
 
     /// Send an async HTTP request with the given parameters
     ///

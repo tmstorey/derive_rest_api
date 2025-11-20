@@ -62,7 +62,7 @@ fn test_validation_failure() {
         .build();
 
     assert!(result.is_err());
-    let err = result.unwrap_err();
+    let err = result.unwrap_err().to_string();
     assert!(err.contains("Validation failed"));
     assert!(err.contains("email"));
     assert!(err.contains("invalid email format"));
@@ -91,7 +91,7 @@ fn test_validation_multiple_fields() {
         .content("World".to_string())
         .build();
     assert!(result2.is_err());
-    assert!(result2.unwrap_err().contains("title"));
+    assert!(result2.unwrap_err().to_string().contains("title"));
 
     // Second field invalid
     let result3 = CreatePostBuilder::new()
@@ -99,7 +99,7 @@ fn test_validation_multiple_fields() {
         .content("Hi".to_string())
         .build();
     assert!(result3.is_err());
-    assert!(result3.unwrap_err().contains("content"));
+    assert!(result3.unwrap_err().to_string().contains("content"));
 }
 
 #[test]
@@ -124,7 +124,7 @@ fn test_validation_optional_field_some() {
         .email("invalid".to_string())
         .build();
     assert!(result2.is_err());
-    assert!(result2.unwrap_err().contains("email"));
+    assert!(result2.unwrap_err().to_string().contains("email"));
 }
 
 #[test]
@@ -160,7 +160,7 @@ fn test_validation_with_default() {
 
     // Since timeout defaults to 0, validation should fail
     assert!(result.is_err());
-    assert!(result.unwrap_err().contains("timeout"));
+    assert!(result.unwrap_err().to_string().contains("timeout"));
 }
 
 #[test]

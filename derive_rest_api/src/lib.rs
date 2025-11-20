@@ -135,6 +135,78 @@ pub use derive_rest_api_macros::{ApiClient, RequestBuilder};
 pub use traits::{AsyncHttpClient, HttpClient};
 pub use error::RequestError;
 
+/// Trait for modifying request builders with common operations.
+///
+/// This trait is automatically implemented by all generated request builders,
+/// allowing configuration structs to uniformly modify requests.
+///
+/// # Example
+///
+/// ```rust,ignore
+/// use derive_rest_api::RequestModifier;
+///
+/// fn add_auth<M: RequestModifier>(modifier: M, token: &str) -> M {
+///     modifier.header("Authorization", format!("Bearer {}", token))
+/// }
+/// ```
+pub trait RequestModifier: Sized {
+    /// Adds an HTTP header to the request.
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - The header name
+    /// * `value` - The header value
+    fn header(self, name: impl Into<String>, value: impl Into<String>) -> Self;
+}
+
+/// Trait for configuration structs to modify request builders.
+///
+/// Implement this trait on your API configuration struct to automatically
+/// apply settings (like authentication headers) to all requests.
+///
+/// # Example
+///
+/// ```rust,ignore
+/// use derive_rest_api::{ConfigureRequest, RequestModifier};
+///
+/// struct MyApiConfig {
+///     api_key: String,
+/// }
+///
+/// impl ConfigureRequest for MyApiConfig {
+///     fn configure<M: RequestModifier>(&self, modifier: M) -> M {
+///         modifier
+///             .header("X-API-Key", &self.api_key)
+///             .header("User-Agent", "my-app/1.0")
+///     }
+/// }
+/// ```
+pub trait ConfigureRequest {
+    /// Configures a request builder with settings from this configuration.
+    ///
+    /// # Arguments
+    ///
+    /// * `modifier` - The request builder to modify
+    ///
+    /// # Returns
+    ///
+    /// The modified request builder
+    fn configure<M: RequestModifier>(&self, modifier: M) -> M;
+}
+
+/// Marker trait to indicate a type does not need request configuration.
+///
+/// Implement this trait (with an empty impl block) if your config struct
+/// doesn't need to modify requests.
+pub trait NoRequestConfiguration {}
+
+/// Blanket implementation of `ConfigureRequest` for types that don't need configuration.
+impl<T: NoRequestConfiguration> ConfigureRequest for T {
+    fn configure<M: RequestModifier>(&self, modifier: M) -> M {
+        modifier
+    }
+}
+
 #[cfg(feature = "reqwest-blocking")]
 pub use clients::ReqwestBlockingClient;
 

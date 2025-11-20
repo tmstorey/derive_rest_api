@@ -42,6 +42,9 @@ struct MyApiConfig {
     api_key: String,
 }
 
+// Implement NoRequestConfiguration since this config doesn't need to modify requests
+impl derive_rest_api::NoRequestConfiguration for MyApiConfig {}
+
 #[test]
 fn test_client_struct_generation() {
     // Test that the client structs are generated
@@ -168,6 +171,8 @@ fn test_config_suffix_stripping() {
     struct GithubApiConfig {
         token: String,
     }
+
+    impl derive_rest_api::NoRequestConfiguration for GithubApiConfig {}
 
     let config = GithubApiConfig {
         token: "test_token".to_string(),

@@ -122,7 +122,7 @@ fn test_build_missing_required_field() {
         .build();
 
     assert!(result.is_err());
-    assert!(result.unwrap_err().contains("include_posts"));
+    assert!(result.unwrap_err().to_string().contains("include_posts"));
 }
 
 #[test]

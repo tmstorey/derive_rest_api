@@ -162,7 +162,7 @@ pub(crate) fn generate_request_builder(input: syn::DeriveInput) -> syn::Result<p
             #[doc = "# Errors"]
             #[doc = ""]
             #[doc = "Returns an error if any required fields are not set or if validation fails."]
-            pub fn build(self) -> std::result::Result<#struct_name, std::string::String> {
+            pub fn build(self) -> std::result::Result<#struct_name, derive_rest_api::RequestError> {
                 // Extract and validate fields
                 #(#field_processing)*
 
@@ -297,7 +297,7 @@ fn generate_field_processing<'a>(
         } else {
             // Field is required, error if not set
             quote::quote! {
-                let #temp_var = self.#field_name.ok_or_else(|| format!("Missing required field: {}", #field_name_str))?;
+                let #temp_var = self.#field_name.ok_or_else(|| derive_rest_api::RequestError::missing_field(#field_name_str))?;
             }
         };
 
@@ -307,13 +307,13 @@ fn generate_field_processing<'a>(
                 // Optional field: validate if Some
                 quote::quote! {
                     if let std::option::Option::Some(ref value) = #temp_var {
-                        #validate_fn(value).map_err(|e| format!("Validation failed for field '{}': {}", #field_name_str, e))?;
+                        #validate_fn(value).map_err(|e| derive_rest_api::RequestError::validation_error(#field_name_str, e))?;
                     }
                 }
             } else {
                 // Non-optional field: always validate
                 quote::quote! {
-                    #validate_fn(&#temp_var).map_err(|e| format!("Validation failed for field '{}': {}", #field_name_str, e))?;
+                    #validate_fn(&#temp_var).map_err(|e| derive_rest_api::RequestError::validation_error(#field_name_str, e))?;
                 }
             }
         } else {
@@ -362,22 +362,22 @@ fn generate_builder_send_methods(
             #[doc = "- URL building fails"]
             #[doc = "- Body serialization fails"]
             #[doc = "- The HTTP request fails"]
-            pub fn send(mut self) -> std::result::Result<std::vec::Vec<u8>, std::string::String> {
+            pub fn send(mut self) -> std::result::Result<std::vec::Vec<u8>, derive_rest_api::RequestError> {
                 // Extract client and base URL before building
                 let client = self.__http_client.take()
-                    .ok_or_else(|| "No HTTP client configured. Use .http_client() to set one.".to_string())?;
+                    .ok_or_else(|| derive_rest_api::RequestError::missing_field("http_client"))?;
 
                 let base_url = self.__base_url.take()
-                    .ok_or_else(|| "No base URL configured. Use .base_url() to set one.".to_string())?;
+                    .ok_or_else(|| derive_rest_api::RequestError::MissingBaseUrl)?;
 
                 let request = self.build()?;
-                let path = request.build_url().map_err(|e| format!("Failed to build URL: {}", e))?;
+                let path = request.build_url().map_err(|e| derive_rest_api::RequestError::UrlBuildError { source: std::boxed::Box::new(e) })?;
                 let url = format!("{}{}", base_url, path);
                 let headers = request.build_headers();
                 let body = request.build_body()?;
 
                 client.send(#method_value, &url, headers, body)
-                    .map_err(|e| format!("HTTP request failed: {:?}", e))
+                    .map_err(|e| derive_rest_api::RequestError::http_error(e))
             }
         }
 
@@ -393,22 +393,22 @@ fn generate_builder_send_methods(
             #[doc = "- URL building fails"]
             #[doc = "- Body serialization fails"]
             #[doc = "- The HTTP request fails"]
-            pub async fn send_async(mut self) -> std::result::Result<std::vec::Vec<u8>, std::string::String> {
+            pub async fn send_async(mut self) -> std::result::Result<std::vec::Vec<u8>, derive_rest_api::RequestError> {
                 // Extract client and base URL before building
                 let client = self.__async_http_client.take()
-                    .ok_or_else(|| "No async HTTP client configured. Use .async_http_client() to set one.".to_string())?;
+                    .ok_or_else(|| derive_rest_api::RequestError::missing_field("async_http_client"))?;
 
                 let base_url = self.__base_url.take()
-                    .ok_or_else(|| "No base URL configured. Use .base_url() to set one.".to_string())?;
+                    .ok_or_else(|| derive_rest_api::RequestError::MissingBaseUrl)?;
 
                 let request = self.build()?;
-                let path = request.build_url().map_err(|e| format!("Failed to build URL: {}", e))?;
+                let path = request.build_url().map_err(|e| derive_rest_api::RequestError::UrlBuildError { source: std::boxed::Box::new(e) })?;
                 let url = format!("{}{}", base_url, path);
                 let headers = request.build_headers();
                 let body = request.build_body()?;
 
                 client.send_async(#method_value, &url, headers, body).await
-                    .map_err(|e| format!("HTTP request failed: {:?}", e))
+                    .map_err(|e| derive_rest_api::RequestError::http_error(e))
             }
         }
     }
@@ -454,7 +454,7 @@ fn generate_http_methods_impl(
                 #[doc = "# Errors"]
                 #[doc = ""]
                 #[doc = "Returns an error if any required path parameters are not set or if query serialization fails."]
-                pub fn build_url(&self) -> std::result::Result<std::string::String, std::string::String> {
+                pub fn build_url(&self) -> std::result::Result<std::string::String, derive_rest_api::RequestError> {
                     let mut path = std::string::String::from(#path_template);
                     #(#path_replacements)*
                     #query_serialization
@@ -492,7 +492,7 @@ fn generate_path_replacements(
                 quote::quote! {
                     path = path.replace(#placeholder, &self.#field_name
                         .as_ref()
-                        .ok_or_else(|| format!("Missing required path parameter: {}", #param))?
+                        .ok_or_else(|| derive_rest_api::RequestError::missing_path_parameter(#param))?
                         .to_string());
                 }
             } else {
@@ -559,7 +559,7 @@ fn generate_query_serialization(
 
         let config = #config_expr;
         let query_string = config.serialize_string(&query_params)
-            .map_err(|e| format!("Failed to serialize query parameters: {}", e))?;
+            .map_err(|e| derive_rest_api::RequestError::QuerySerializationError { source: e })?;
 
         if !query_string.is_empty() {
             path.push('?');
@@ -573,7 +573,7 @@ fn generate_build_body_method(body_fields: &[&syn::Field]) -> proc_macro2::Token
     if body_fields.is_empty() {
         return quote::quote! {
             #[doc = "Builds the request body (always returns None as there are no body fields)."]
-            pub fn build_body(&self) -> std::result::Result<std::option::Option<std::vec::Vec<u8>>, std::string::String> {
+            pub fn build_body(&self) -> std::result::Result<std::option::Option<std::vec::Vec<u8>>, derive_rest_api::RequestError> {
                 std::result::Result::Ok(std::option::Option::None)
             }
         };
@@ -608,7 +608,7 @@ fn generate_build_body_method(body_fields: &[&syn::Field]) -> proc_macro2::Token
         #[doc = "# Errors"]
         #[doc = ""]
         #[doc = "Returns an error if JSON serialization fails."]
-        pub fn build_body(&self) -> std::result::Result<std::option::Option<std::vec::Vec<u8>>, std::string::String> {
+        pub fn build_body(&self) -> std::result::Result<std::option::Option<std::vec::Vec<u8>>, derive_rest_api::RequestError> {
             #[derive(serde::Serialize)]
             struct BodyParams {
                 #(#body_struct_fields),*
@@ -619,7 +619,7 @@ fn generate_build_body_method(body_fields: &[&syn::Field]) -> proc_macro2::Token
             };
 
             let json = serde_json::to_vec(&body_params)
-                .map_err(|e| format!("Failed to serialize body: {}", e))?;
+                .map_err(|e| derive_rest_api::RequestError::BodySerializationError { source: e })?;
 
             std::result::Result::Ok(std::option::Option::Some(json))
         }
@@ -688,14 +688,14 @@ fn generate_send_with_client_method(struct_attrs: &StructAttributes) -> proc_mac
             &self,
             client: &C,
             base_url: &str,
-        ) -> std::result::Result<std::vec::Vec<u8>, std::string::String> {
-            let path = self.build_url().map_err(|e| format!("Failed to build URL: {}", e))?;
+        ) -> std::result::Result<std::vec::Vec<u8>, derive_rest_api::RequestError> {
+            let path = self.build_url().map_err(|e| derive_rest_api::RequestError::UrlBuildError { source: std::boxed::Box::new(e) })?;
             let url = format!("{}{}", base_url, path);
             let headers = self.build_headers();
             let body = self.build_body()?;
 
             client.send(#method_value, &url, headers, body)
-                .map_err(|e| format!("HTTP request failed: {:?}", e))
+                .map_err(|e| derive_rest_api::RequestError::http_error(e))
         }
     }
 }

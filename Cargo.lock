@@ -64,6 +64,7 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_qs",
+ "thiserror",
  "tokio",
  "ureq",
 ]

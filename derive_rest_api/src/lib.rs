@@ -64,10 +64,12 @@
 // Module declarations
 mod traits;
 mod clients;
+mod error;
 
 // Re-exports
 pub use derive_rest_api_macros::{ApiClient, RequestBuilder};
 pub use traits::{AsyncHttpClient, HttpClient};
+pub use error::RequestError;
 
 #[cfg(feature = "reqwest-blocking")]
 pub use clients::ReqwestBlockingClient;

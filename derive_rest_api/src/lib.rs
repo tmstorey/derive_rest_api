@@ -143,3 +143,21 @@ pub use clients::ReqwestAsyncClient;
 
 #[cfg(feature = "ureq-blocking")]
 pub use clients::UreqBlockingClient;
+
+cfg_if::cfg_if! {
+    if #[cfg(feature = "ureq-blocking")] {
+        pub type DefaultBlockingClient = UreqBlockingClient;
+    } else if #[cfg(feature = "reqwest-blocking")] {
+        pub type DefaultBlockingClient = ReqwestBlockingClient;
+    } else {
+        pub type DefaultBlockingClient = ();
+    }
+}
+
+cfg_if::cfg_if! {
+    if #[cfg(feature = "reqwest-async")] {
+        pub type DefaultAsyncClient = ReqwestAsyncClient;
+    } else {
+        pub type DefaultAsyncClient = ();
+    }
+}

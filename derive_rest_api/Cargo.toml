@@ -8,6 +8,7 @@ derive_rest_api_macros = { path = "../derive_rest_api_macros" }
 thiserror = "2.0"
 serde_json = "1.0"
 serde_qs = "1.0.0-rc.3"
+cfg-if = "1.0.4"
 
 [features]
 default = []

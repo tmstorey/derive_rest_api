@@ -363,6 +363,16 @@ fn generate_builder_send_methods(
 ) -> proc_macro2::TokenStream {
     let builder_name = quote::format_ident!("{}Builder", struct_name);
     let method_value = struct_attrs.method.as_ref().map(|s| s.as_str()).unwrap_or("GET");
+    let return_type = struct_attrs.response.clone().unwrap_or(syn::Type::Verbatim(quote::quote! {Vec<u8>}));
+
+    let return_value = match struct_attrs.response.clone() {
+        Some(_) => quote::quote! {
+            let bytes = response?;
+            serde_json::from_slice(&bytes)
+                .map_err(|e| derive_rest_api::RequestError::BodySerializationError { source: e })
+        },
+        _ => quote::quote! { response },
+    };
 
     quote::quote! {
         // Impl block for builders with an HTTP client
@@ -377,7 +387,7 @@ fn generate_builder_send_methods(
             #[doc = "- URL building fails"]
             #[doc = "- Body serialization fails"]
             #[doc = "- The HTTP request fails"]
-            pub fn send(mut self) -> std::result::Result<std::vec::Vec<u8>, derive_rest_api::RequestError> {
+            pub fn send(mut self) -> std::result::Result<#return_type, derive_rest_api::RequestError> {
                 // Extract client and base URL before building
                 let client = self.__http_client.take()
                     .ok_or_else(|| derive_rest_api::RequestError::missing_field("http_client"))?;
@@ -394,8 +404,10 @@ fn generate_builder_send_methods(
                 headers.extend(dynamic_headers);
                 let body = request.build_body()?;
 
-                client.send(#method_value, &url, headers, body)
-                    .map_err(|e| derive_rest_api::RequestError::http_error(e))
+                let response = client.send(#method_value, &url, headers, body)
+                    .map_err(|e| derive_rest_api::RequestError::http_error(e));
+
+                #return_value
             }
         }
 
@@ -411,7 +423,7 @@ fn generate_builder_send_methods(
             #[doc = "- URL building fails"]
             #[doc = "- Body serialization fails"]
             #[doc = "- The HTTP request fails"]
-            pub async fn send_async(mut self) -> std::result::Result<std::vec::Vec<u8>, derive_rest_api::RequestError> {
+            pub async fn send_async(mut self) -> std::result::Result<#return_type, derive_rest_api::RequestError> {
                 // Extract client and base URL before building
                 let client = self.__async_http_client.take()
                     .ok_or_else(|| derive_rest_api::RequestError::missing_field("async_http_client"))?;
@@ -428,8 +440,10 @@ fn generate_builder_send_methods(
                 headers.extend(dynamic_headers);
                 let body = request.build_body()?;
 
-                client.send_async(#method_value, &url, headers, body).await
-                    .map_err(|e| derive_rest_api::RequestError::http_error(e))
+                let response = client.send_async(#method_value, &url, headers, body).await
+                    .map_err(|e| derive_rest_api::RequestError::http_error(e));
+
+                #return_value
             }
         }
     }

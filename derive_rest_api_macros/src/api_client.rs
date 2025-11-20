@@ -220,7 +220,11 @@ fn generate_blocking_client(
                     .base_url(&self.base_url);
 
                 // Apply configuration if the config implements ConfigureRequest
-                <#config_struct as derive_rest_api::ConfigureRequest>::configure(&self.config, builder)
+                if let std::option::Option::Some(config) = &self.config {
+                    <#config_struct as derive_rest_api::ConfigureRequest>::configure(config, builder)
+                } else {
+                    builder
+                }
             }
         }
     }).collect();
@@ -228,16 +232,17 @@ fn generate_blocking_client(
     quote! {
         #[doc = concat!("Blocking HTTP client for [`", stringify!(#config_struct), "`].")]
         pub struct #client_name<C: derive_rest_api::HttpClient> {
-            config: #config_struct,
+            config: std::option::Option<#config_struct>,
             base_url: std::string::String,
             client: C,
         }
 
         impl<C: derive_rest_api::HttpClient> #client_name<C> {
             #[doc = concat!("Creates a new [`", stringify!(#client_name), "`].")]
-            pub fn new(config: #config_struct, client: C) -> Self {
+            pub fn new() -> Self {
+                let client = C::default();
                 Self {
-                    config,
+                    config: std::option::Option::None,
                     base_url: #base_url.to_string(),
                     client,
                 }
@@ -249,8 +254,20 @@ fn generate_blocking_client(
                 self
             }
 
+            #[doc = "Sets the underlying HTTP client for this API client."]
+            pub fn with_http_client(mut self, client: impl std::convert::Into<C>) -> Self {
+                self.client = client.into();
+                self
+            }
+
+            #[doc = "Sets the config for this client."]
+            pub fn with_config(mut self, config: #config_struct) -> Self {
+                self.config = std::option::Option::Some(config);
+                self
+            }
+
             #[doc = "Returns a reference to the configuration."]
-            pub fn config(&self) -> &#config_struct {
+            pub fn config(&self) -> &std::option::Option<#config_struct> {
                 &self.config
             }
 
@@ -290,7 +307,11 @@ fn generate_async_client(
                     .base_url(&self.base_url);
 
                 // Apply configuration if the config implements ConfigureRequest
-                <#config_struct as derive_rest_api::ConfigureRequest>::configure(&self.config, builder)
+                if let std::option::Option::Some(config) = &self.config {
+                    <#config_struct as derive_rest_api::ConfigureRequest>::configure(config, builder)
+                } else {
+                    builder
+                }
             }
         }
     }).collect();
@@ -298,16 +319,17 @@ fn generate_async_client(
     quote! {
         #[doc = concat!("Async HTTP client for [`", stringify!(#config_struct), "`].")]
         pub struct #client_name<A: derive_rest_api::AsyncHttpClient> {
-            config: #config_struct,
+            config: std::option::Option<#config_struct>,
             base_url: std::string::String,
             client: A,
         }
 
         impl<A: derive_rest_api::AsyncHttpClient> #client_name<A> {
             #[doc = concat!("Creates a new [`", stringify!(#client_name), "`].")]
-            pub fn new(config: #config_struct, client: A) -> Self {
+            pub fn new() -> Self {
+                let client = A::default();
                 Self {
-                    config,
+                    config: std::option::Option::None,
                     base_url: #base_url.to_string(),
                     client,
                 }
@@ -319,8 +341,20 @@ fn generate_async_client(
                 self
             }
 
+            #[doc = "Sets the underlying HTTP client for this API client."]
+            pub fn with_http_client(mut self, client: impl std::convert::Into<A>) -> Self {
+                self.client = client.into();
+                self
+            }
+
+            #[doc = "Sets the config for this client."]
+            pub fn with_config(mut self, config: #config_struct) -> Self {
+                self.config = std::option::Option::Some(config);
+                self
+            }
+
             #[doc = "Returns a reference to the configuration."]
-            pub fn config(&self) -> &#config_struct {
+            pub fn config(&self) -> &std::option::Option<#config_struct> {
                 &self.config
             }
 

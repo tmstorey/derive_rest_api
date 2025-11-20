@@ -55,6 +55,12 @@ impl ReqwestBlockingClient {
     }
 }
 
+impl From<reqwest::blocking::Client> for ReqwestBlockingClient {
+    fn from(client: reqwest::blocking::Client) -> Self {
+        ReqwestBlockingClient::with_client(client)
+    }
+}
+
 impl Default for ReqwestBlockingClient {
     fn default() -> Self {
         Self {

@@ -13,7 +13,7 @@ impl std::fmt::Display for MockError {
 impl std::error::Error for MockError {}
 
 // Mock HTTP client
-#[derive(Clone)]
+#[derive(Clone, Default)]
 struct MockClient;
 
 impl derive_rest_api::HttpClient for MockClient {
@@ -46,7 +46,7 @@ fn test_unit_struct_auto_no_config() {
     struct UnitConfig;
 
     let config = UnitConfig;
-    let client = UnitClient::new(config, MockClient);
+    let client = UnitClient::<MockClient>::new().with_config(config);
 
     // Should compile and work without manual NoRequestConfiguration impl
     let _builder = client.get_user();
@@ -63,7 +63,7 @@ fn test_empty_struct_auto_no_config() {
     struct EmptyConfig {}
 
     let config = EmptyConfig {};
-    let client = EmptyClient::new(config, MockClient);
+    let client = EmptyClient::<MockClient>::new().with_config(config);
 
     // Should compile and work without manual NoRequestConfiguration impl
     let _builder = client.get_user();
@@ -80,7 +80,7 @@ fn test_empty_tuple_struct_auto_no_config() {
     struct EmptyTupleConfig();
 
     let config = EmptyTupleConfig();
-    let client = EmptyTupleClient::new(config, MockClient);
+    let client = EmptyTupleClient::<MockClient>::new().with_config(config);
 
     // Should compile and work without manual NoRequestConfiguration impl
     let _builder = client.get_user();

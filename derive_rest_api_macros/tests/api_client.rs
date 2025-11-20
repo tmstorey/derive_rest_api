@@ -53,7 +53,7 @@ fn test_client_struct_generation() {
     };
 
     // Mock HTTP client
-    #[derive(Clone)]
+    #[derive(Clone, Default)]
     struct MockClient;
     impl derive_rest_api::HttpClient for MockClient {
         type Error = MockError;
@@ -68,10 +68,10 @@ fn test_client_struct_generation() {
         }
     }
 
-    let client = MyApiClient::new(config.clone(), MockClient);
+    let client = MyApiClient::<MockClient>::new().with_config(config);
 
     // Verify we can access the config
-    assert_eq!(client.config().api_key, "test_key");
+    assert_eq!(client.config().clone().unwrap().api_key, "test_key");
 }
 
 #[test]
@@ -81,7 +81,7 @@ fn test_async_client_struct_generation() {
     };
 
     // Mock async HTTP client
-    #[derive(Clone)]
+    #[derive(Clone, Default)]
     struct MockAsyncClient;
     impl derive_rest_api::AsyncHttpClient for MockAsyncClient {
         type Error = MockError;
@@ -96,19 +96,15 @@ fn test_async_client_struct_generation() {
         }
     }
 
-    let client = MyApiAsyncClient::new(config.clone(), MockAsyncClient);
+    let client = MyApiAsyncClient::<MockAsyncClient>::new().with_config(config);
 
     // Verify we can access the config
-    assert_eq!(client.config().api_key, "test_key");
+    assert_eq!(client.config().clone().unwrap().api_key, "test_key");
 }
 
 #[test]
 fn test_method_generation() {
-    let config = MyApiConfig {
-        api_key: "test_key".to_string(),
-    };
-
-    #[derive(Clone)]
+    #[derive(Clone, Default)]
     struct MockClient;
     impl derive_rest_api::HttpClient for MockClient {
         type Error = MockError;
@@ -123,7 +119,7 @@ fn test_method_generation() {
         }
     }
 
-    let client = MyApiClient::new(config, MockClient);
+    let client = MyApiClient::<MockClient>::new();
 
     // Test that methods exist and return builders
     let _get_user_builder = client.get_user();
@@ -137,7 +133,7 @@ fn test_with_base_url() {
         api_key: "test_key".to_string(),
     };
 
-    #[derive(Clone)]
+    #[derive(Clone, Default)]
     struct MockClient;
     impl derive_rest_api::HttpClient for MockClient {
         type Error = MockError;
@@ -152,7 +148,8 @@ fn test_with_base_url() {
         }
     }
 
-    let client = MyApiClient::new(config, MockClient)
+    let client = MyApiClient::<MockClient>::new()
+        .with_config(config)
         .with_base_url("https://custom.example.com");
 
     // Base URL should be updated
@@ -178,7 +175,7 @@ fn test_config_suffix_stripping() {
         token: "test_token".to_string(),
     };
 
-    #[derive(Clone)]
+    #[derive(Clone, Default)]
     struct MockClient;
     impl derive_rest_api::HttpClient for MockClient {
         type Error = MockError;
@@ -194,5 +191,5 @@ fn test_config_suffix_stripping() {
     }
 
     // Should generate GithubApiClient, not GithubApiConfigClient
-    let _client = GithubApiClient::new(config, MockClient);
+    let _client = GithubApiClient::<MockClient>::new().with_config(config);
 }

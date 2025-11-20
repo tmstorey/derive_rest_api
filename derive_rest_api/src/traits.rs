@@ -24,7 +24,7 @@ use std::collections::HashMap;
 ///
 /// impl std::error::Error for MyError {}
 ///
-/// #[derive(Clone)]
+/// #[derive(Clone, Default)]
 /// struct MyClient;
 ///
 /// impl HttpClient for MyClient {
@@ -42,7 +42,7 @@ use std::collections::HashMap;
 ///     }
 /// }
 /// ```
-pub trait HttpClient: Clone {
+pub trait HttpClient: Clone + Default {
     /// The error type for this HTTP client
     type Error: std::error::Error + Send + Sync + 'static;
 
@@ -89,7 +89,7 @@ pub trait HttpClient: Clone {
 ///
 /// impl std::error::Error for MyError {}
 ///
-/// #[derive(Clone)]
+/// #[derive(Clone, Default)]
 /// struct MyAsyncClient;
 ///
 /// impl AsyncHttpClient for MyAsyncClient {
@@ -107,7 +107,7 @@ pub trait HttpClient: Clone {
 ///     }
 /// }
 /// ```
-pub trait AsyncHttpClient: Clone  {
+pub trait AsyncHttpClient: Clone + Default  {
     /// The error type for this HTTP client
     type Error: std::error::Error + Send + Sync + 'static;
 

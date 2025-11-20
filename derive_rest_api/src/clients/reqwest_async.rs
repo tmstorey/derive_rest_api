@@ -59,6 +59,12 @@ impl ReqwestAsyncClient {
     }
 }
 
+impl From<reqwest::Client> for ReqwestAsyncClient {
+    fn from(client: reqwest::Client) -> Self {
+        ReqwestAsyncClient::with_client(client)
+    }
+}
+
 impl Default for ReqwestAsyncClient {
     fn default() -> Self {
         Self {

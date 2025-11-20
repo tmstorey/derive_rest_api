@@ -50,6 +50,12 @@ impl UreqBlockingClient {
     }
 }
 
+impl From<ureq::Agent> for UreqBlockingClient {
+    fn from(agent: ureq::Agent) -> Self {
+        UreqBlockingClient::with_agent(agent)
+    }
+}
+
 impl Default for UreqBlockingClient {
     fn default() -> Self {
         Self::new()

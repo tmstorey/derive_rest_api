@@ -15,7 +15,7 @@ impl std::fmt::Display for MockError {
 impl std::error::Error for MockError {}
 
 // Mock HTTP client for testing
-#[derive(Clone)]
+#[derive(Clone, Default)]
 struct MockHttpClient {
     response: Vec<u8>,
 }

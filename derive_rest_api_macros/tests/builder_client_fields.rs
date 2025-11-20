@@ -14,7 +14,7 @@ impl std::fmt::Display for MockError {
 impl std::error::Error for MockError {}
 
 // Mock HTTP client for testing
-#[derive(Clone)]
+#[derive(Clone, Default)]
 struct MockHttpClient;
 
 impl derive_rest_api::HttpClient for MockHttpClient {
@@ -32,7 +32,7 @@ impl derive_rest_api::HttpClient for MockHttpClient {
 }
 
 // Mock async HTTP client for testing
-#[derive(Clone)]
+#[derive(Clone, Default)]
 struct MockAsyncHttpClient;
 
 impl derive_rest_api::AsyncHttpClient for MockAsyncHttpClient {

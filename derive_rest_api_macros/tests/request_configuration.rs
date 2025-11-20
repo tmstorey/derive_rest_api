@@ -14,7 +14,7 @@ impl std::fmt::Display for MockError {
 impl std::error::Error for MockError {}
 
 // Mock HTTP client for testing
-#[derive(Clone)]
+#[derive(Clone, Default)]
 struct MockHttpClient;
 
 impl derive_rest_api::HttpClient for MockHttpClient {
@@ -77,7 +77,7 @@ fn test_configure_request_with_api_client() {
         user_agent: "my-app/1.0".to_string(),
     };
 
-    let client = MyApiClient::new(config, MockHttpClient);
+    let client = MyApiClient::<MockHttpClient>::new().with_config(config);
 
     // The builder should be pre-configured with headers from the config
     let result = client.get_user()
@@ -94,7 +94,7 @@ fn test_manual_header_override() {
         user_agent: "my-app/1.0".to_string(),
     };
 
-    let client = MyApiClient::new(config, MockHttpClient);
+    let client = MyApiClient::<MockHttpClient>::new().with_config(config);
 
     // Manually added headers should also work
     let builder = client.get_user()

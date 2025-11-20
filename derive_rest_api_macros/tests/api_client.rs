@@ -68,7 +68,7 @@ fn test_client_struct_generation() {
         }
     }
 
-    let client = MyApiClient::<MockClient>::new().with_config(config);
+    let client = MyApiClient::<MockClient>::with_client().with_config(config);
 
     // Verify we can access the config
     assert_eq!(client.config().clone().unwrap().api_key, "test_key");
@@ -96,7 +96,7 @@ fn test_async_client_struct_generation() {
         }
     }
 
-    let client = MyApiAsyncClient::<MockAsyncClient>::new().with_config(config);
+    let client = MyApiAsyncClient::<MockAsyncClient>::with_client().with_config(config);
 
     // Verify we can access the config
     assert_eq!(client.config().clone().unwrap().api_key, "test_key");
@@ -119,7 +119,7 @@ fn test_method_generation() {
         }
     }
 
-    let client = MyApiClient::<MockClient>::new();
+    let client = MyApiClient::<MockClient>::with_client();
 
     // Test that methods exist and return builders
     let _get_user_builder = client.get_user();
@@ -148,7 +148,7 @@ fn test_with_base_url() {
         }
     }
 
-    let client = MyApiClient::<MockClient>::new()
+    let client = MyApiClient::<MockClient>::with_client()
         .with_config(config)
         .with_base_url("https://custom.example.com");
 
@@ -191,5 +191,5 @@ fn test_config_suffix_stripping() {
     }
 
     // Should generate GithubApiClient, not GithubApiConfigClient
-    let _client = GithubApiClient::<MockClient>::new().with_config(config);
+    let _client = GithubApiClient::<MockClient>::with_client().with_config(config);
 }

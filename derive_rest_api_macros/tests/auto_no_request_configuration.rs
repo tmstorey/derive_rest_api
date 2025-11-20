@@ -46,7 +46,7 @@ fn test_unit_struct_auto_no_config() {
     struct UnitConfig;
 
     let config = UnitConfig;
-    let client = UnitClient::<MockClient>::new().with_config(config);
+    let client = UnitClient::<MockClient>::with_client().with_config(config);
 
     // Should compile and work without manual NoRequestConfiguration impl
     let _builder = client.get_user();
@@ -63,7 +63,7 @@ fn test_empty_struct_auto_no_config() {
     struct EmptyConfig {}
 
     let config = EmptyConfig {};
-    let client = EmptyClient::<MockClient>::new().with_config(config);
+    let client = EmptyClient::<MockClient>::with_client().with_config(config);
 
     // Should compile and work without manual NoRequestConfiguration impl
     let _builder = client.get_user();
@@ -80,7 +80,7 @@ fn test_empty_tuple_struct_auto_no_config() {
     struct EmptyTupleConfig();
 
     let config = EmptyTupleConfig();
-    let client = EmptyTupleClient::<MockClient>::new().with_config(config);
+    let client = EmptyTupleClient::<MockClient>::with_client().with_config(config);
 
     // Should compile and work without manual NoRequestConfiguration impl
     let _builder = client.get_user();

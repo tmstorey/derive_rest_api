@@ -28,6 +28,7 @@ use std::collections::HashMap;
 ///
 /// let client = UreqBlockingClient::with_agent(agent);
 /// ```
+#[derive(Clone)]
 pub struct UreqBlockingClient {
     agent: ureq::Agent,
 }

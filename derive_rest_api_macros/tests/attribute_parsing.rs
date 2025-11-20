@@ -136,7 +136,6 @@ fn test_field_header_attribute() {
 fn test_mixed_field_attributes() {
     #[derive(RequestBuilder)]
     #[request_builder(method = "PUT", path = "/api/users/{id}")]
-    #[expect(unused)]
     struct UpdateUser {
         #[request_builder(path)]
         id: u64,

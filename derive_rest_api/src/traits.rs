@@ -13,6 +13,7 @@ use std::collections::HashMap;
 /// use derive_rest_api::HttpClient;
 /// use std::collections::HashMap;
 ///
+/// #[derive(Clone)]
 /// struct MyClient;
 ///
 /// impl HttpClient for MyClient {
@@ -30,7 +31,7 @@ use std::collections::HashMap;
 ///     }
 /// }
 /// ```
-pub trait HttpClient {
+pub trait HttpClient: Clone {
     /// The error type for this HTTP client
     type Error: std::fmt::Debug;
 
@@ -66,6 +67,7 @@ pub trait HttpClient {
 /// use derive_rest_api::AsyncHttpClient;
 /// use std::collections::HashMap;
 ///
+/// #[derive(Clone)]
 /// struct MyAsyncClient;
 ///
 /// impl AsyncHttpClient for MyAsyncClient {
@@ -83,7 +85,7 @@ pub trait HttpClient {
 ///     }
 /// }
 /// ```
-pub trait AsyncHttpClient {
+pub trait AsyncHttpClient: Clone  {
     /// The error type for this HTTP client
     type Error: std::fmt::Debug;
 

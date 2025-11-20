@@ -33,6 +33,7 @@ use std::collections::HashMap;
 /// let client = ReqwestAsyncClient::with_client(reqwest_client);
 /// # };
 /// ```
+#[derive(Clone)]
 pub struct ReqwestAsyncClient {
     client: reqwest::Client,
 }

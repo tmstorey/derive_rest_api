@@ -3,6 +3,7 @@ use serde::Serialize;
 use std::collections::HashMap;
 
 // Mock HTTP client for testing
+#[derive(Clone)]
 struct MockHttpClient {
     response: Vec<u8>,
 }
@@ -97,6 +98,7 @@ fn test_build_body_with_fields() {
 }
 
 #[test]
+#[allow(dead_code)]
 fn test_build_body_no_fields() {
     #[derive(RequestBuilder)]
     #[request_builder(method = "GET", path = "/api/users/{id}")]
@@ -163,6 +165,7 @@ fn test_build_headers_with_fields() {
 }
 
 #[test]
+#[allow(dead_code)]
 fn test_build_headers_no_fields() {
     #[derive(RequestBuilder)]
     #[request_builder(method = "GET", path = "/api/users/{id}")]

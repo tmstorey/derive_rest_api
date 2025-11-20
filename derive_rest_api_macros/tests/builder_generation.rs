@@ -9,9 +9,12 @@ struct GetUser {
 #[test]
 fn test_builder_struct_exists() {
     // This test will compile if the builder struct is generated
-    let _builder = GetUserBuilder {
+    let _builder: GetUserBuilder<(), ()> = GetUserBuilder {
         id: Some(123),
         include_posts: Some(true),
+        __http_client: None,
+        __async_http_client: None,
+        __base_url: None,
     };
 }
 
@@ -25,9 +28,12 @@ fn test_builder_with_optional_field() {
     }
 
     // query should be Option<String>, limit should be Option<u32> (not double-wrapped)
-    let _builder = SearchUsersBuilder {
+    let _builder: SearchUsersBuilder<(), ()> = SearchUsersBuilder {
         query: Some("test".to_string()),
         limit: Some(10),
+        __http_client: None,
+        __async_http_client: None,
+        __base_url: None,
     };
 }
 
@@ -206,4 +212,23 @@ fn test_into_with_optional_field() {
 
     assert_eq!(search.query, "rust");
     assert_eq!(search.author, Some("alice".to_string()));
+}
+
+#[test]
+fn test_builder_client_fields() {
+    // Test that builder has client fields and can be constructed
+    let builder = GetUserBuilder::new();
+
+    // Verify client fields are None initially
+    assert!(builder.__http_client.is_none());
+    assert!(builder.__async_http_client.is_none());
+    assert!(builder.__base_url.is_none());
+
+    // Verify we can still build normally
+    let result = builder
+        .id(123)
+        .include_posts(true)
+        .build();
+
+    assert!(result.is_ok());
 }

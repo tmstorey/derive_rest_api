@@ -29,6 +29,7 @@ use std::collections::HashMap;
 ///
 /// let client = ReqwestBlockingClient::with_client(reqwest_client);
 /// ```
+#[derive(Clone)]
 pub struct ReqwestBlockingClient {
     client: reqwest::blocking::Client,
 }

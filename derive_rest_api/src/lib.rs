@@ -66,7 +66,7 @@ mod traits;
 mod clients;
 
 // Re-exports
-pub use derive_rest_api_macros::RequestBuilder;
+pub use derive_rest_api_macros::{ApiClient, RequestBuilder};
 pub use traits::{AsyncHttpClient, HttpClient};
 
 #[cfg(feature = "reqwest-blocking")]

@@ -16,6 +16,8 @@ A Rust procedural macro library for generating type-safe builder patterns for RE
 - ✅ Generic HTTP client trait for pluggable backends
 - ✅ Built-in reqwest support (blocking and async)
 - ✅ Built-in ureq support (lightweight blocking client)
+- ✅ High-level API client generation with `#[derive(ApiClient)]`
+- ✅ Type-safe error handling with `thiserror`
 
 ## Quick Start
 
@@ -132,6 +134,67 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 ```
 
+### High-Level API Client
+
+For a more ergonomic experience, use the `ApiClient` derive macro to generate a high-level client that wraps your configuration and request types:
+
+```rust
+use derive_rest_api::{ApiClient, RequestBuilder, ReqwestBlockingClient};
+use serde::Serialize;
+
+// Define your request types
+#[derive(RequestBuilder, Serialize)]
+#[request_builder(method = "GET", path = "/users/{id}")]
+struct GetUser {
+    id: u64,
+}
+
+#[derive(RequestBuilder, Serialize)]
+#[request_builder(method = "POST", path = "/users")]
+struct CreateUser {
+    #[request_builder(body)]
+    name: String,
+}
+
+// Define your API configuration
+#[derive(Clone, ApiClient)]
+#[api_client(
+    base_url = "https://api.example.com",
+    requests(GetUser, CreateUser)
+)]
+struct MyApiConfig {
+    api_key: String,
+}
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Create your config
+    let config = MyApiConfig {
+        api_key: "your-api-key".to_string(),
+    };
+
+    // Create the client
+    let client = MyApiClient::new(config, ReqwestBlockingClient::new()?);
+
+    // Use the generated methods - they return pre-configured builders
+    let user = client.get_user()
+        .id(123)
+        .send()?;
+
+    let new_user = client.create_user()
+        .name("Alice".to_string())
+        .send()?;
+
+    Ok(())
+}
+```
+
+The `ApiClient` macro generates:
+- `MyApiClient` - Blocking client with methods for each request type
+- `MyApiAsyncClient` - Async client for async request types
+- Pre-configured builders with the base URL and HTTP client already set
+- Methods named after your request structs (snake_case)
+- Custom method names via `requests(CreateUser = "new_user")`
+
 ### With Ureq (Blocking)
 
 ```rust
@@ -164,6 +227,51 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 ```
 
+## Error Handling
+
+The library uses `thiserror` for type-safe error handling. All operations that can fail return a `Result<T, RequestError>`:
+
+```rust
+use derive_rest_api::{RequestBuilder, RequestError};
+
+#[derive(RequestBuilder)]
+#[request_builder(method = "GET", path = "/users/{id}")]
+struct GetUser {
+    id: u64,
+}
+
+fn example() -> Result<(), RequestError> {
+    let request = GetUserBuilder::new()
+        .id(123)
+        .build()?;
+
+    match request.build_url() {
+        Ok(url) => println!("URL: {}", url),
+        Err(RequestError::MissingPathParameter { param }) => {
+            eprintln!("Missing parameter: {}", param);
+        }
+        Err(RequestError::QuerySerializationError { source }) => {
+            eprintln!("Query error: {}", source);
+        }
+        Err(e) => {
+            eprintln!("Other error: {}", e);
+        }
+    }
+
+    Ok(())
+}
+```
+
+Available error variants:
+- `MissingField` - Required builder field not set
+- `MissingPathParameter` - Path parameter not provided
+- `QuerySerializationError` - Query string serialization failed
+- `BodySerializationError` - JSON body serialization failed
+- `ValidationError` - Field validation failed
+- `MissingBaseUrl` - No base URL configured
+- `UrlBuildError` - URL building failed
+- `HttpError` - HTTP client error
+
 ## Attributes
 
 ### Struct-level Attributes
@@ -191,6 +299,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 | `into` | Enable `Into<T>` for this field | `#[request_builder(into)]` |
 | `default` | Use default value if not set | `#[request_builder(default)]` |
 | `validate = "fn"` | Custom validation function | `#[request_builder(validate = "validate_email")]` |
+
+### ApiClient Attributes
+
+| Attribute | Description | Example |
+|-----------|-------------|---------|
+| `base_url = "..."` | Base URL for all requests | `#[api_client(base_url = "https://api.example.com")]` |
+| `requests(...)` | Request types to include | `#[api_client(requests(GetUser, CreateUser))]` |
+| Custom method name | Rename generated method | `requests(CreateUser = "new_user")` |
 
 ## Serde Integration
 
@@ -220,12 +336,24 @@ Implement the `HttpClient` trait for your own blocking HTTP client:
 use derive_rest_api::HttpClient;
 use std::collections::HashMap;
 
+#[derive(Debug)]
+struct MyError(String);
+
+impl std::fmt::Display for MyError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+impl std::error::Error for MyError {}
+
+#[derive(Clone)]
 struct MyBlockingHttpClient {
     // Your client implementation
 }
 
 impl HttpClient for MyBlockingHttpClient {
-    type Error = String;
+    type Error = MyError;
 
     fn send(
         &self,
@@ -248,12 +376,24 @@ Implement the `AsyncHttpClient` trait for your own async HTTP client:
 use derive_rest_api::AsyncHttpClient;
 use std::collections::HashMap;
 
+#[derive(Debug)]
+struct MyError(String);
+
+impl std::fmt::Display for MyError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+impl std::error::Error for MyError {}
+
+#[derive(Clone)]
 struct MyAsyncHttpClient {
     // Your client implementation
 }
 
 impl AsyncHttpClient for MyAsyncHttpClient {
-    type Error = String;
+    type Error = MyError;
 
     async fn send_async(
         &self,
@@ -267,6 +407,8 @@ impl AsyncHttpClient for MyAsyncHttpClient {
     }
 }
 ```
+
+**Note**: Error types must implement `std::error::Error + Send + Sync + 'static`.
 
 ## Features
 

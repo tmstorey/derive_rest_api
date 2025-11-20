@@ -4,7 +4,7 @@
 
 #[cfg(feature = "reqwest-async")]
 mod example {
-    use derive_rest_api::{ApiClient, AsyncHttpClient, RequestBuilder, ReqwestAsyncClient};
+    use derive_rest_api::{ApiClient, RequestBuilder};
     use serde::Serialize;
     use serde_json::to_string_pretty;
 
@@ -51,8 +51,8 @@ mod example {
     pub async fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("=== Reqwest Async Client Example ===\n");
 
-        // Create a reqwest async client wrapper
-        let client = JsonPlaceholderAsyncClient::<ReqwestAsyncClient>::new();
+        // Create a reqwest async client wrapper using the default client (auto-selected based on features)
+        let client = JsonPlaceholderAsyncClient::new();
 
         // Example 1: GET request with path parameter and query string
         println!("1. Fetching user with ID 1...");
@@ -85,7 +85,7 @@ mod example {
             .user_agent("derive-rest-api-async-example/1.0")
             .build()?;
 
-        let custom_client = JsonPlaceholderAsyncClient::<ReqwestAsyncClient>::new()
+        let custom_client = JsonPlaceholderAsyncClient::new()
             .with_http_client(custom_reqwest_client);
 
         let custom_request = custom_client.get_user()

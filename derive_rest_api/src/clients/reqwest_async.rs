@@ -82,6 +82,7 @@ impl AsyncHttpClient for ReqwestAsyncClient {
         url: &str,
         headers: HashMap<String, String>,
         body: Option<Vec<u8>>,
+        timeout: Option<std::time::Duration>,
     ) -> Result<Vec<u8>, Self::Error> {
         let mut request = match method.to_uppercase().as_str() {
             "GET" => self.client.get(url),
@@ -108,6 +109,11 @@ impl AsyncHttpClient for ReqwestAsyncClient {
         // Add body if present
         if let Some(body_data) = body {
             request = request.body(body_data);
+        }
+
+        // Add timeout if present
+        if let Some(timeout_duration) = timeout {
+            request = request.timeout(timeout_duration);
         }
 
         let response = request.send().await?;

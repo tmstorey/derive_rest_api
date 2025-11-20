@@ -16,6 +16,7 @@ fn test_builder_struct_exists() {
         __async_http_client: None,
         __base_url: None,
         __dynamic_headers: std::collections::HashMap::new(),
+        __timeout: None,
     };
 }
 
@@ -36,6 +37,7 @@ fn test_builder_with_optional_field() {
         __async_http_client: None,
         __base_url: None,
         __dynamic_headers: std::collections::HashMap::new(),
+        __timeout: None,
     };
 }
 

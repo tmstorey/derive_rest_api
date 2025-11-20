@@ -206,6 +206,7 @@ pub(super) fn generate_builder_send_methods(
                 let base_url = self.__base_url.take()
                     .ok_or_else(|| derive_rest_api::RequestError::MissingBaseUrl)?;
 
+                let timeout = self.__timeout.take();
                 let dynamic_headers = self.__dynamic_headers.clone();
                 let request = self.build()?;
                 let path = request.build_url().map_err(|e| derive_rest_api::RequestError::UrlBuildError { source: std::boxed::Box::new(e) })?;
@@ -215,7 +216,7 @@ pub(super) fn generate_builder_send_methods(
                 headers.extend(dynamic_headers);
                 let body = request.build_body()?;
 
-                let response = client.send(#method_value, &url, headers, body)
+                let response = client.send(#method_value, &url, headers, body, timeout)
                     .map_err(|e| derive_rest_api::RequestError::http_error(e));
 
                 #return_value
@@ -242,6 +243,7 @@ pub(super) fn generate_builder_send_methods(
                 let base_url = self.__base_url.take()
                     .ok_or_else(|| derive_rest_api::RequestError::MissingBaseUrl)?;
 
+                let timeout = self.__timeout.take();
                 let dynamic_headers = self.__dynamic_headers.clone();
                 let request = self.build()?;
                 let path = request.build_url().map_err(|e| derive_rest_api::RequestError::UrlBuildError { source: std::boxed::Box::new(e) })?;
@@ -251,7 +253,7 @@ pub(super) fn generate_builder_send_methods(
                 headers.extend(dynamic_headers);
                 let body = request.build_body()?;
 
-                let response = client.send_async(#method_value, &url, headers, body).await
+                let response = client.send_async(#method_value, &url, headers, body, timeout).await
                     .map_err(|e| derive_rest_api::RequestError::http_error(e));
 
                 #return_value

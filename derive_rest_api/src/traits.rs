@@ -36,6 +36,7 @@ use std::collections::HashMap;
 ///         url: &str,
 ///         headers: HashMap<String, String>,
 ///         body: Option<Vec<u8>>,
+///         timeout: Option<std::time::Duration>,
 ///     ) -> Result<Vec<u8>, Self::Error> {
 ///         // Your implementation here
 ///         Ok(vec![])
@@ -54,6 +55,7 @@ pub trait HttpClient: Clone + Default {
     /// - `url`: Complete URL including query parameters
     /// - `headers`: HTTP headers as key-value pairs
     /// - `body`: Optional request body as bytes
+    /// - `timeout`: Optional timeout duration for the request
     ///
     /// # Errors
     ///
@@ -64,6 +66,7 @@ pub trait HttpClient: Clone + Default {
         url: &str,
         headers: HashMap<String, String>,
         body: Option<Vec<u8>>,
+        timeout: Option<std::time::Duration>,
     ) -> Result<Vec<u8>, Self::Error>;
 }
 
@@ -76,6 +79,7 @@ impl HttpClient for () {
         _url: &str,
         _headers: HashMap<String, String>,
         _body: Option<Vec<u8>>,
+        _timeout: Option<std::time::Duration>,
     ) -> Result<Vec<u8>, Self::Error> {
         unimplemented!("No blocking client found.")
     }
@@ -133,6 +137,7 @@ pub trait AsyncHttpClient: Clone + Default  {
     /// - `url`: Complete URL including query parameters
     /// - `headers`: HTTP headers as key-value pairs
     /// - `body`: Optional request body as bytes
+    /// - `timeout`: Optional timeout duration for the request
     ///
     /// # Errors
     ///
@@ -143,6 +148,7 @@ pub trait AsyncHttpClient: Clone + Default  {
         url: &str,
         headers: HashMap<String, String>,
         body: Option<Vec<u8>>,
+        timeout: Option<std::time::Duration>,
     ) -> impl std::future::Future<Output = Result<Vec<u8>, Self::Error>> + Send;
 }
 
@@ -155,6 +161,7 @@ impl AsyncHttpClient for () {
         _url: &str,
         _headers: HashMap<String, String>,
         _body: Option<Vec<u8>>,
+        _timeout: Option<std::time::Duration>,
     ) -> Result<Vec<u8>, Self::Error> {
         unimplemented!("No async client found.")
     }
@@ -182,6 +189,13 @@ pub trait RequestModifier: Sized {
     /// * `name` - The header name
     /// * `value` - The header value
     fn header(self, name: impl Into<String>, value: impl Into<String>) -> Self;
+
+    /// Sets the timeout duration for the request.
+    ///
+    /// # Arguments
+    ///
+    /// * `timeout` - The timeout duration
+    fn timeout(self, timeout: std::time::Duration) -> Self;
 }
 
 /// Trait for configuration structs to modify request builders.

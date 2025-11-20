@@ -195,6 +195,59 @@ The `ApiClient` macro generates:
 - Methods named after your request structs (snake_case)
 - Custom method names via `requests(CreateUser = "new_user")`
 
+### Configuring Requests Automatically
+
+Use the `ConfigureRequest` trait to automatically apply settings (like auth headers) to all requests:
+
+```rust
+use derive_rest_api::{ApiClient, ConfigureRequest, RequestBuilder, RequestModifier};
+use serde::Serialize;
+
+#[derive(RequestBuilder, Serialize)]
+#[request_builder(method = "GET", path = "/users/{id}")]
+struct GetUser {
+    id: u64,
+}
+
+#[derive(Clone, ApiClient)]
+#[api_client(
+    base_url = "https://api.example.com",
+    requests(GetUser)
+)]
+struct MyApiConfig {
+    api_key: String,
+    user_agent: String,
+}
+
+// Implement ConfigureRequest to modify all requests
+impl ConfigureRequest for MyApiConfig {
+    fn configure<M: RequestModifier>(&self, modifier: M) -> M {
+        modifier
+            .header("X-API-Key", &self.api_key)
+            .header("User-Agent", &self.user_agent)
+    }
+}
+
+// All requests automatically include the configured headers!
+let config = MyApiConfig {
+    api_key: "secret_key_123".to_string(),
+    user_agent: "my-app/1.0".to_string(),
+};
+
+let client = MyApiClient::new(config, http_client);
+client.get_user().id(123).send()?; // X-API-Key and User-Agent are auto-applied
+```
+
+If your config doesn't need to modify requests, implement `NoRequestConfiguration`:
+
+```rust
+struct SimpleConfig {
+    timeout: u64,
+}
+
+impl derive_rest_api::NoRequestConfiguration for SimpleConfig {}
+```
+
 ### With Ureq (Blocking)
 
 ```rust

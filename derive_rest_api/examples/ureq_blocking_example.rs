@@ -4,7 +4,7 @@
 
 #[cfg(feature = "ureq-blocking")]
 mod example {
-    use derive_rest_api::{ApiClient, HttpClient, RequestBuilder, UreqBlockingClient};
+    use derive_rest_api::{ApiClient, RequestBuilder};
     use serde::Serialize;
     use serde_json::to_string_pretty;
 
@@ -51,8 +51,8 @@ mod example {
     pub fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("=== Ureq Blocking Client Example ===\n");
 
-        // Create a ureq client wrapper
-        let client = JsonPlaceholderClient::<UreqBlockingClient>::new();
+        // Create a ureq client wrapper using the default client (auto-selected based on features)
+        let client = JsonPlaceholderClient::new();
 
         // Example 1: GET request with path parameter and query string
         println!("1. Fetching user with ID 1...");
@@ -83,7 +83,7 @@ mod example {
             .user_agent("derive-rest-api-ureq-example/1.0")
             .build();
 
-        let custom_client = JsonPlaceholderClient::<UreqBlockingClient>::new()
+        let custom_client = JsonPlaceholderClient::new()
             .with_http_client(custom_agent);
 
         let custom_request = custom_client.get_user()

@@ -238,9 +238,28 @@ fn generate_blocking_client(
             client: C,
         }
 
-        impl<C: derive_rest_api::HttpClient> #client_name<C> {
-            #[doc = concat!("Creates a new [`", stringify!(#client_name), "`].")]
+        // Non-generic impl for default client type
+        impl #client_name<derive_rest_api::DefaultBlockingClient> {
+            #[doc = concat!("Creates a new [`", stringify!(#client_name), "`] with the default HTTP client.")]
+            #[doc = ""]
+            #[doc = "The default client is determined by enabled cargo features:"]
+            #[doc = "- `ureq-blocking` → `UreqBlockingClient`"]
+            #[doc = "- `reqwest-blocking` → `ReqwestBlockingClient`"]
             pub fn new() -> Self {
+                let client = derive_rest_api::DefaultBlockingClient::default();
+                Self {
+                    config: std::option::Option::None,
+                    base_url: #base_url.to_string(),
+                    client,
+                }
+            }
+        }
+
+        impl<C: derive_rest_api::HttpClient> #client_name<C> {
+            #[doc = concat!("Creates a new [`", stringify!(#client_name), "`] with a custom HTTP client type.")]
+            #[doc = ""]
+            #[doc = "Use this method when you want to specify a different client than the default."]
+            pub fn with_client() -> Self {
                 let client = C::default();
                 Self {
                     config: std::option::Option::None,
@@ -326,9 +345,27 @@ fn generate_async_client(
             client: A,
         }
 
-        impl<A: derive_rest_api::AsyncHttpClient> #client_name<A> {
-            #[doc = concat!("Creates a new [`", stringify!(#client_name), "`].")]
+        // Non-generic impl for default client type
+        impl #client_name<derive_rest_api::DefaultAsyncClient> {
+            #[doc = concat!("Creates a new [`", stringify!(#client_name), "`] with the default async HTTP client.")]
+            #[doc = ""]
+            #[doc = "The default async client is determined by enabled cargo features:"]
+            #[doc = "- `reqwest-async` → `ReqwestAsyncClient`"]
             pub fn new() -> Self {
+                let client = derive_rest_api::DefaultAsyncClient::default();
+                Self {
+                    config: std::option::Option::None,
+                    base_url: #base_url.to_string(),
+                    client,
+                }
+            }
+        }
+
+        impl<A: derive_rest_api::AsyncHttpClient> #client_name<A> {
+            #[doc = concat!("Creates a new [`", stringify!(#client_name), "`] with a custom async HTTP client type.")]
+            #[doc = ""]
+            #[doc = "Use this method when you want to specify a different client than the default."]
+            pub fn with_client() -> Self {
                 let client = A::default();
                 Self {
                     config: std::option::Option::None,

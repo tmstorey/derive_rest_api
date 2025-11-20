@@ -189,10 +189,16 @@ fn generate_blocking_client(
 
         quote! {
             #[doc = concat!("Creates a new [`", stringify!(#struct_name), "`] request builder.")]
+            #[doc = ""]
+            #[doc = "The builder is pre-configured with the client's HTTP client and base URL."]
+            #[doc = "If the config implements `ConfigureRequest`, it will also be pre-configured with those settings."]
             pub fn #method_name(&self) -> #builder_name<C, ()> {
-                #builder_name::new()
+                let builder = #builder_name::new()
                     .http_client((&self.client).clone())
-                    .base_url(&self.base_url)
+                    .base_url(&self.base_url);
+
+                // Apply configuration if the config implements ConfigureRequest
+                <#config_struct as derive_rest_api::ConfigureRequest>::configure(&self.config, builder)
             }
         }
     }).collect();
@@ -253,10 +259,16 @@ fn generate_async_client(
 
         quote! {
             #[doc = concat!("Creates a new [`", stringify!(#struct_name), "`] request builder.")]
+            #[doc = ""]
+            #[doc = "The builder is pre-configured with the client's async HTTP client and base URL."]
+            #[doc = "If the config implements `ConfigureRequest`, it will also be pre-configured with those settings."]
             pub fn #method_name(&self) -> #builder_name<(), A> {
-                #builder_name::new()
+                let builder = #builder_name::new()
                     .async_http_client((&self.client).clone())
-                    .base_url(&self.base_url)
+                    .base_url(&self.base_url);
+
+                // Apply configuration if the config implements ConfigureRequest
+                <#config_struct as derive_rest_api::ConfigureRequest>::configure(&self.config, builder)
             }
         }
     }).collect();

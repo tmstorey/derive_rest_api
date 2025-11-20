@@ -114,6 +114,7 @@ pub(crate) fn generate_request_builder(input: syn::DeriveInput) -> syn::Result<p
             __http_client: std::option::Option<__C>,
             __async_http_client: std::option::Option<__A>,
             __base_url: std::option::Option<std::string::String>,
+            __dynamic_headers: std::collections::HashMap<std::string::String, std::string::String>,
         }
 
         impl #builder_name<(), ()> {
@@ -124,6 +125,7 @@ pub(crate) fn generate_request_builder(input: syn::DeriveInput) -> syn::Result<p
                     __http_client: std::option::Option::None,
                     __async_http_client: std::option::Option::None,
                     __base_url: std::option::Option::None,
+                    __dynamic_headers: std::collections::HashMap::new(),
                 }
             }
         }
@@ -136,6 +138,7 @@ pub(crate) fn generate_request_builder(input: syn::DeriveInput) -> syn::Result<p
                     __http_client: std::option::Option::Some(client),
                     __async_http_client: self.__async_http_client,
                     __base_url: self.__base_url,
+                    __dynamic_headers: self.__dynamic_headers,
                 }
             }
 
@@ -146,6 +149,7 @@ pub(crate) fn generate_request_builder(input: syn::DeriveInput) -> syn::Result<p
                     __http_client: self.__http_client,
                     __async_http_client: std::option::Option::Some(client),
                     __base_url: self.__base_url,
+                    __dynamic_headers: self.__dynamic_headers,
                 }
             }
 
@@ -154,6 +158,17 @@ pub(crate) fn generate_request_builder(input: syn::DeriveInput) -> syn::Result<p
                 self.__base_url = std::option::Option::Some(base_url.into());
                 self
             }
+        }
+
+        // Implement RequestModifier trait for the builder
+        impl<__C, __A> derive_rest_api::RequestModifier for #builder_name<__C, __A> {
+            fn header(mut self, name: impl std::convert::Into<std::string::String>, value: impl std::convert::Into<std::string::String>) -> Self {
+                self.__dynamic_headers.insert(name.into(), value.into());
+                self
+            }
+        }
+
+        impl<__C, __A> #builder_name<__C, __A> {
 
             #(#setter_methods)*
 
@@ -370,10 +385,13 @@ fn generate_builder_send_methods(
                 let base_url = self.__base_url.take()
                     .ok_or_else(|| derive_rest_api::RequestError::MissingBaseUrl)?;
 
+                let dynamic_headers = self.__dynamic_headers.clone();
                 let request = self.build()?;
                 let path = request.build_url().map_err(|e| derive_rest_api::RequestError::UrlBuildError { source: std::boxed::Box::new(e) })?;
                 let url = format!("{}{}", base_url, path);
-                let headers = request.build_headers();
+                let mut headers = request.build_headers();
+                // Merge dynamic headers (these override request headers)
+                headers.extend(dynamic_headers);
                 let body = request.build_body()?;
 
                 client.send(#method_value, &url, headers, body)
@@ -401,10 +419,13 @@ fn generate_builder_send_methods(
                 let base_url = self.__base_url.take()
                     .ok_or_else(|| derive_rest_api::RequestError::MissingBaseUrl)?;
 
+                let dynamic_headers = self.__dynamic_headers.clone();
                 let request = self.build()?;
                 let path = request.build_url().map_err(|e| derive_rest_api::RequestError::UrlBuildError { source: std::boxed::Box::new(e) })?;
                 let url = format!("{}{}", base_url, path);
-                let headers = request.build_headers();
+                let mut headers = request.build_headers();
+                // Merge dynamic headers (these override request headers)
+                headers.extend(dynamic_headers);
                 let body = request.build_body()?;
 
                 client.send_async(#method_value, &url, headers, body).await
@@ -444,7 +465,7 @@ fn generate_http_methods_impl(
         let path_replacements = generate_path_replacements(&path_params, fields);
         let query_serialization = generate_query_serialization(&query_fields, struct_attrs);
         let build_body_method = generate_build_body_method(&body_fields);
-        let build_headers_method = generate_build_headers_method(&header_fields);
+        let build_headers_method = generate_request_build_headers_method(&header_fields);
         let send_with_client_method = generate_send_with_client_method(struct_attrs);
 
         quote::quote! {
@@ -626,17 +647,8 @@ fn generate_build_body_method(body_fields: &[&syn::Field]) -> proc_macro2::Token
     }
 }
 
-/// Generate the build_headers() method
-fn generate_build_headers_method(header_fields: &[&syn::Field]) -> proc_macro2::TokenStream {
-    if header_fields.is_empty() {
-        return quote::quote! {
-            #[doc = "Builds HTTP headers (empty as there are no header fields)."]
-            pub fn build_headers(&self) -> std::collections::HashMap<std::string::String, std::string::String> {
-                std::collections::HashMap::new()
-            }
-        };
-    }
-
+/// Generate the build_headers() method for the request struct (no dynamic headers)
+fn generate_request_build_headers_method(header_fields: &[&syn::Field]) -> proc_macro2::TokenStream {
     let header_insertions = header_fields.iter().map(|field| {
         let field_name = &field.ident;
         let field_type = &field.ty;
@@ -668,6 +680,7 @@ fn generate_build_headers_method(header_fields: &[&syn::Field]) -> proc_macro2::
         }
     }
 }
+
 
 /// Generate the send_with_client() method
 fn generate_send_with_client_method(struct_attrs: &StructAttributes) -> proc_macro2::TokenStream {

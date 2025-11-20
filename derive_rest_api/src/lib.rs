@@ -61,40 +61,19 @@
 //! marked with `body` or `query` are automatically copied to the generated serialization structs,
 //! allowing full control over how fields are serialized.
 
-use std::collections::HashMap;
+// Module declarations
+mod traits;
+mod clients;
 
-/// Trait for HTTP clients that can execute REST API requests.
-///
-/// This trait abstracts over different HTTP client implementations (reqwest, ureq, etc.)
-/// allowing the generated request builders to work with any compliant client.
-///
-/// # Type Parameters
-///
-/// - `E`: The error type returned by the client
-pub trait HttpClient {
-    /// The error type for this HTTP client
-    type Error: std::fmt::Debug;
-
-    /// Send an HTTP request with the given parameters
-    ///
-    /// # Arguments
-    ///
-    /// - `method`: HTTP method (GET, POST, PUT, DELETE, etc.)
-    /// - `url`: Complete URL including query parameters
-    /// - `headers`: HTTP headers as key-value pairs
-    /// - `body`: Optional request body as bytes
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if the HTTP request fails
-    fn send(
-        &self,
-        method: &str,
-        url: &str,
-        headers: HashMap<String, String>,
-        body: Option<Vec<u8>>,
-    ) -> Result<Vec<u8>, Self::Error>;
-}
-
-// Re-export the procedural macro
+// Re-exports
 pub use derive_rest_api_macros::RequestBuilder;
+pub use traits::{AsyncHttpClient, HttpClient};
+
+#[cfg(feature = "reqwest-blocking")]
+pub use clients::ReqwestBlockingClient;
+
+#[cfg(feature = "reqwest-async")]
+pub use clients::ReqwestAsyncClient;
+
+#[cfg(feature = "ureq-blocking")]
+pub use clients::UreqBlockingClient;

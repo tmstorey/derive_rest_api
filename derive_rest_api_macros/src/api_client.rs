@@ -211,7 +211,7 @@ fn generate_blocking_client(
     quote! {
         #[doc = concat!("Blocking HTTP client for [`", stringify!(#config_struct), "`].")]
         #[derive(Clone)]
-        pub struct #client_name<C: derive_rest_api::HttpClient = derive_rest_api::DefaultBlockingClient> {
+        pub struct #client_name<C: derive_rest_api::HttpClient> {
             config: std::option::Option<#config_struct>,
             base_url: std::string::String,
             client: C,
@@ -318,7 +318,7 @@ fn generate_async_client(
     quote! {
         #[doc = concat!("Async HTTP client for [`", stringify!(#config_struct), "`].")]
         #[derive(Clone)]
-        pub struct #client_name<A: derive_rest_api::AsyncHttpClient = derive_rest_api::DefaultAsyncClient> {
+        pub struct #client_name<A: derive_rest_api::AsyncHttpClient> {
             config: std::option::Option<#config_struct>,
             base_url: std::string::String,
             client: A,

@@ -1,5 +1,8 @@
 //! HTTP client implementations for various backends.
 
+#[derive(Clone, Debug, Default)]
+pub struct UnimplementedClient;
+
 #[cfg(feature = "reqwest-blocking")]
 mod reqwest_blocking;
 

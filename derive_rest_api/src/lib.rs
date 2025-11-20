@@ -149,7 +149,7 @@ cfg_if::cfg_if! {
     } else if #[cfg(feature = "reqwest-blocking")] {
         pub type DefaultBlockingClient = ReqwestBlockingClient;
     } else {
-        pub type DefaultBlockingClient = ();
+        pub type DefaultBlockingClient = clients::UnimplementedClient;
     }
 }
 
@@ -157,6 +157,6 @@ cfg_if::cfg_if! {
     if #[cfg(feature = "reqwest-async")] {
         pub type DefaultAsyncClient = ReqwestAsyncClient;
     } else {
-        pub type DefaultAsyncClient = ();
+        pub type DefaultAsyncClient = clients::UnimplementedClient;
     }
 }

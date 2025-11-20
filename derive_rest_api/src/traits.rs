@@ -70,21 +70,6 @@ pub trait HttpClient: Clone + Default {
     ) -> Result<Vec<u8>, Self::Error>;
 }
 
-impl HttpClient for () {
-    type Error = std::convert::Infallible;
-
-    fn send(
-        &self,
-        _method: &str,
-        _url: &str,
-        _headers: HashMap<String, String>,
-        _body: Option<Vec<u8>>,
-        _timeout: Option<std::time::Duration>,
-    ) -> Result<Vec<u8>, Self::Error> {
-        unimplemented!("No blocking client found.")
-    }
-}
-
 /// Trait for async HTTP clients that can execute REST API requests.
 ///
 /// This trait abstracts over different async HTTP client implementations (reqwest async, hyper, etc.)
@@ -153,7 +138,22 @@ pub trait AsyncHttpClient: Clone + Default  {
     ) -> impl std::future::Future<Output = Result<Vec<u8>, Self::Error>> + Send;
 }
 
-impl AsyncHttpClient for () {
+impl HttpClient for crate::clients::UnimplementedClient {
+    type Error = std::convert::Infallible;
+
+    fn send(
+        &self,
+        _method: &str,
+        _url: &str,
+        _headers: HashMap<String, String>,
+        _body: Option<Vec<u8>>,
+        _timeout: Option<std::time::Duration>,
+    ) -> Result<Vec<u8>, Self::Error> {
+        unimplemented!("No blocking client found.")
+    }
+}
+
+impl AsyncHttpClient for crate::clients::UnimplementedClient {
     type Error = std::convert::Infallible;
 
     async fn send_async(

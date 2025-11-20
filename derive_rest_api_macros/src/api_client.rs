@@ -3,6 +3,7 @@
 //! This module generates client structs that wrap a configuration struct
 //! and provide methods for making API requests using the RequestBuilder pattern.
 
+use crate::utils::pascal_to_snake_case;
 use proc_macro2::TokenStream;
 use quote::quote;
 use syn::{parse::Parse, punctuated::Punctuated, token::Comma, Ident, LitStr, Token};
@@ -167,28 +168,6 @@ fn generate_async_client_name(struct_name: &Ident) -> Ident {
     quote::format_ident!("{}AsyncClient", base_name)
 }
 
-/// Convert struct name to snake_case method name
-fn struct_name_to_method_name(struct_name: &Ident) -> String {
-    let name = struct_name.to_string();
-
-    // Convert PascalCase to snake_case
-    let mut result = String::new();
-    let mut chars = name.chars().peekable();
-
-    while let Some(ch) = chars.next() {
-        if ch.is_uppercase() {
-            if !result.is_empty() {
-                result.push('_');
-            }
-            result.push(ch.to_lowercase().next().unwrap());
-        } else {
-            result.push(ch);
-        }
-    }
-
-    result
-}
-
 /// Generate the blocking client struct and impl
 fn generate_blocking_client(
     config_struct: &Ident,
@@ -205,7 +184,7 @@ fn generate_blocking_client(
         let method_name = mapping.method_name.as_ref()
             .map(|s| quote::format_ident!("{}", s))
             .unwrap_or_else(|| {
-                let name = struct_name_to_method_name(struct_name);
+                let name = pascal_to_snake_case(&struct_name.to_string());
                 quote::format_ident!("{}", name)
             });
 
@@ -312,7 +291,7 @@ fn generate_async_client(
         let method_name = mapping.method_name.as_ref()
             .map(|s| quote::format_ident!("{}", s))
             .unwrap_or_else(|| {
-                let name = struct_name_to_method_name(struct_name);
+                let name = pascal_to_snake_case(&struct_name.to_string());
                 quote::format_ident!("{}", name)
             });
 

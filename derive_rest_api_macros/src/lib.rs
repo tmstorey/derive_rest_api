@@ -17,7 +17,7 @@ mod utils;
 ///
 /// # Example
 ///
-/// ```ignore
+/// ```rust
 /// use derive_rest_api::RequestBuilder;
 /// use serde::Serialize;
 ///
@@ -46,8 +46,21 @@ pub fn derive_request_builder(input: proc_macro::TokenStream) -> proc_macro::Tok
 ///
 /// # Example
 ///
-/// ```ignore
-/// use derive_rest_api::ApiClient;
+/// ```rust
+/// use derive_rest_api::{ApiClient, ConfigureRequest, RequestModifier};
+/// # use serde::Serialize;
+/// #
+/// # #[derive(derive_rest_api::RequestBuilder, Serialize)]
+/// # #[request_builder(method = "GET", path = "/users/{id}")]
+/// # struct GetUser {
+/// #     id: u64,
+/// # }
+/// #
+/// # #[derive(derive_rest_api::RequestBuilder, Serialize)]
+/// # #[request_builder(method = "POST", path = "/users/{id}")]
+/// # struct CreateUser {
+/// #     id: u64,
+/// # }
 ///
 /// #[derive(Clone, ApiClient)]
 /// #[api_client(
@@ -56,6 +69,12 @@ pub fn derive_request_builder(input: proc_macro::TokenStream) -> proc_macro::Tok
 /// )]
 /// struct MyApiConfig {
 ///     api_key: String,
+/// }
+/// 
+/// impl ConfigureRequest for MyApiConfig {
+///     fn configure<M: RequestModifier>(&self, modifier: M) -> M {
+///         modifier.header("X-API-Key", &self.api_key)
+///     }
 /// }
 /// ```
 ///

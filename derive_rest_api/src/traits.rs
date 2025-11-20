@@ -92,7 +92,7 @@ impl HttpClient for () {
 ///
 /// # Example
 ///
-/// ```ignore
+/// ```
 /// use derive_rest_api::AsyncHttpClient;
 /// use std::collections::HashMap;
 ///
@@ -119,6 +119,7 @@ impl HttpClient for () {
 ///         url: &str,
 ///         headers: HashMap<String, String>,
 ///         body: Option<Vec<u8>>,
+///         timeout: Option<std::time::Duration>,
 ///     ) -> Result<Vec<u8>, Self::Error> {
 ///         // Your async implementation here
 ///         Ok(vec![])

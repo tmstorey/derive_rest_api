@@ -47,7 +47,7 @@
 //! For a more ergonomic API, use `#[derive(ApiClient)]` to generate a high-level client:
 //!
 //! ```rust,ignore
-//! use derive_rest_api::{ApiClient, RequestBuilder, ReqwestBlockingClient};
+//! use derive_rest_api::{ApiClient, RequestBuilder, RequestError};
 //! use serde::Serialize;
 //!
 //! #[derive(RequestBuilder, Serialize)]
@@ -68,17 +68,16 @@
 //!     base_url = "https://api.example.com",
 //!     requests(GetUser, CreateUser = "new_user")
 //! )]
-//! struct MyApiConfig {
-//!     api_key: String,
+//! struct MyApi;
+//!
+//! fn main() -> Result<(), RequestError> {
+//!     let client = MyApiClient::new();
+//!
+//!     // Methods are pre-configured with base URL and HTTP client
+//!     let user = client.get_user().id(123).send()?;
+//!     let new_user = client.new_user().name("Alice".to_string()).send()?;
+//!     Ok(())
 //! }
-//!
-//! // Usage:
-//! let config = MyApiConfig { api_key: "key".to_string() };
-//! let client = MyApiClient::new(config, ReqwestBlockingClient::new()?);
-//!
-//! // Methods are pre-configured with base URL and HTTP client
-//! let user = client.get_user().id(123).send()?;
-//! let new_user = client.new_user().name("Alice".to_string()).send()?;
 //! ```
 //!
 //! ## Error Handling

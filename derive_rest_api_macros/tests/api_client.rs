@@ -9,6 +9,7 @@ struct GetUser {
 
 #[derive(RequestBuilder)]
 #[request_builder(method = "POST", path = "/users")]
+#[allow(dead_code)]
 struct CreateUser {
     name: String,
 }
@@ -144,6 +145,7 @@ fn test_with_base_url() {
 }
 
 #[test]
+#[allow(dead_code)]
 fn test_config_suffix_stripping() {
     // Test that "Config" suffix is stripped from struct names
     #[derive(Clone, ApiClient)]

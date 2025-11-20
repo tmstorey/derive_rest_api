@@ -8,7 +8,7 @@ use quote::quote;
 use syn::{parse::Parse, punctuated::Punctuated, token::Comma, Ident, LitStr, Token};
 
 /// Main entry point for the ApiClient derive macro
-pub fn generate_api_client(input: syn::DeriveInput) -> syn::Result<TokenStream> {
+pub(crate) fn generate_api_client(input: syn::DeriveInput) -> syn::Result<TokenStream> {
     let struct_name = &input.ident;
 
     // Parse the api_client attribute

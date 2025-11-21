@@ -45,6 +45,7 @@ pub(crate) fn generate_api_client(input: syn::DeriveInput) -> syn::Result<TokenS
         struct_name,
         &client_name,
         &attrs,
+        attrs.use_default,
     );
 
     // Generate the async client
@@ -52,6 +53,7 @@ pub(crate) fn generate_api_client(input: syn::DeriveInput) -> syn::Result<TokenS
         struct_name,
         &async_client_name,
         &attrs,
+        attrs.use_default,
     );
 
     Ok(quote! {
@@ -66,6 +68,7 @@ pub(crate) fn generate_api_client(input: syn::DeriveInput) -> syn::Result<TokenS
 struct ApiClientAttributes {
     base_url: String,
     requests: Vec<RequestMapping>,
+    use_default: bool,
 }
 
 /// Maps a request struct to a method name
@@ -93,6 +96,7 @@ impl Parse for ApiClientAttributes {
     fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
         let mut base_url: Option<String> = None;
         let mut requests: Option<Vec<RequestMapping>> = None;
+        let mut use_default = false;
 
         while !input.is_empty() {
             let key: Ident = input.parse()?;
@@ -105,6 +109,8 @@ impl Parse for ApiClientAttributes {
                 let content;
                 syn::parenthesized!(content in input);
                 requests = Some(parse_request_mappings(&content)?);
+            } else if key == "default" {
+                use_default = true;
             } else {
                 return Err(syn::Error::new_spanned(
                     &key,
@@ -125,6 +131,7 @@ impl Parse for ApiClientAttributes {
             requests: requests.ok_or_else(|| {
                 syn::Error::new(input.span(), "Missing 'requests' attribute")
             })?,
+            use_default,
         })
     }
 }
@@ -173,6 +180,7 @@ fn generate_blocking_client(
     config_struct: &Ident,
     client_name: &Ident,
     attrs: &ApiClientAttributes,
+    use_default: bool,
 ) -> TokenStream {
     let base_url = &attrs.base_url;
 
@@ -208,6 +216,13 @@ fn generate_blocking_client(
         }
     }).collect();
 
+    // Generate the initial config value based on the use_default flag
+    let initial_config = if use_default {
+        quote! { std::option::Option::Some(#config_struct::default()) }
+    } else {
+        quote! { std::option::Option::None }
+    };
+
     quote! {
         #[doc = concat!("Blocking HTTP client for [`", stringify!(#config_struct), "`].")]
         #[derive(Clone)]
@@ -227,7 +242,7 @@ fn generate_blocking_client(
             pub fn new() -> Self {
                 let client = derive_rest_api::DefaultBlockingClient::default();
                 Self {
-                    config: std::option::Option::None,
+                    config: #initial_config,
                     base_url: #base_url.to_string(),
                     client,
                 }
@@ -241,7 +256,7 @@ fn generate_blocking_client(
             pub fn with_client() -> Self {
                 let client = C::default();
                 Self {
-                    config: std::option::Option::None,
+                    config: #initial_config,
                     base_url: #base_url.to_string(),
                     client,
                 }
@@ -280,6 +295,7 @@ fn generate_async_client(
     config_struct: &Ident,
     client_name: &Ident,
     attrs: &ApiClientAttributes,
+    use_default: bool,
 ) -> TokenStream {
     let base_url = &attrs.base_url;
 
@@ -315,6 +331,13 @@ fn generate_async_client(
         }
     }).collect();
 
+    // Generate the initial config value based on the use_default flag
+    let initial_config = if use_default {
+        quote! { std::option::Option::Some(#config_struct::default()) }
+    } else {
+        quote! { std::option::Option::None }
+    };
+
     quote! {
         #[doc = concat!("Async HTTP client for [`", stringify!(#config_struct), "`].")]
         #[derive(Clone)]
@@ -333,7 +356,7 @@ fn generate_async_client(
             pub fn new() -> Self {
                 let client = derive_rest_api::DefaultAsyncClient::default();
                 Self {
-                    config: std::option::Option::None,
+                    config: #initial_config,
                     base_url: #base_url.to_string(),
                     client,
                 }
@@ -347,7 +370,7 @@ fn generate_async_client(
             pub fn with_client() -> Self {
                 let client = A::default();
                 Self {
-                    config: std::option::Option::None,
+                    config: #initial_config,
                     base_url: #base_url.to_string(),
                     client,
                 }

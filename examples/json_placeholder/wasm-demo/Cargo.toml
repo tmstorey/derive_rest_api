@@ -1,0 +1,17 @@
+[package]
+name = "json_placeholder_wasm"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[workspace]
+# This makes the package independent from the parent workspace
+
+[dependencies]
+json_placeholder = { path = "..", default-features = false, features = ["reqwest-async"] }
+wasm-bindgen = "0.2"
+wasm-bindgen-futures = "0.4"
+console_error_panic_hook = "0.1"
+web-sys = { version = "0.3", features = ["console"] }

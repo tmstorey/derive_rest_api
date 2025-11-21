@@ -38,13 +38,17 @@ pub(crate) fn generate_request_builder(input: syn::DeriveInput) -> syn::Result<p
     let struct_doc_attrs = extract_doc_attributes(&input.attrs);
 
     // Extract fields from the struct
-    let fields = match &input.data {
+    // For unit structs, we create an empty collection
+    let empty_fields = syn::punctuated::Punctuated::new();
+
+    let (fields, is_unit_struct) = match &input.data {
         syn::Data::Struct(data_struct) => match &data_struct.fields {
-            syn::Fields::Named(fields) => &fields.named,
+            syn::Fields::Named(fields) => (&fields.named, false),
+            syn::Fields::Unit => (&empty_fields, true),
             _ => {
                 return Err(syn::Error::new_spanned(
                     input,
-                    "RequestBuilder only supports structs with named fields",
+                    "RequestBuilder only supports structs with named fields or unit structs",
                 ))
             }
         },
@@ -81,13 +85,28 @@ pub(crate) fn generate_request_builder(input: syn::DeriveInput) -> syn::Result<p
         quote! {}
     };
 
+    // Generate struct construction code based on whether it's a unit struct
+    let struct_construction = if is_unit_struct {
+        // Unit struct: construct without braces
+        quote! {
+            std::result::Result::Ok(#struct_name)
+        }
+    } else {
+        // Named fields struct: construct with braces (even if empty)
+        quote! {
+            std::result::Result::Ok(#struct_name {
+                #(#build_fields),*
+            })
+        }
+    };
+
     // Generate the builder struct and its impl block
     let expanded = quote! {
         #(#struct_doc_attrs)*
         #[doc = ""]
         #[doc = concat!("Builder for [`", stringify!(#struct_name), "`].")]
         pub struct #builder_name<__C = (), __A = ()> {
-            #(#builder_fields),*,
+            #(#builder_fields,)*
             __http_client: std::option::Option<__C>,
             __async_http_client: std::option::Option<__A>,
             __base_url: std::option::Option<std::string::String>,
@@ -99,7 +118,7 @@ pub(crate) fn generate_request_builder(input: syn::DeriveInput) -> syn::Result<p
             #[doc = concat!("Creates a new [`", stringify!(#builder_name), "`] with all fields set to `None`.")]
             pub fn new() -> Self {
                 Self {
-                    #(#field_names: std::option::Option::None),*,
+                    #(#field_names: std::option::Option::None,)*
                     __http_client: std::option::Option::None,
                     __async_http_client: std::option::Option::None,
                     __base_url: std::option::Option::None,
@@ -113,7 +132,7 @@ pub(crate) fn generate_request_builder(input: syn::DeriveInput) -> syn::Result<p
             #[doc = "Sets the HTTP client to use for blocking requests."]
             pub fn http_client<C2: derive_rest_api::HttpClient>(self, client: C2) -> #builder_name<C2, __A> {
                 #builder_name {
-                    #(#field_names: self.#field_names),*,
+                    #(#field_names: self.#field_names,)*
                     __http_client: std::option::Option::Some(client),
                     __async_http_client: self.__async_http_client,
                     __base_url: self.__base_url,
@@ -125,7 +144,7 @@ pub(crate) fn generate_request_builder(input: syn::DeriveInput) -> syn::Result<p
             #[doc = "Sets the async HTTP client to use for async requests."]
             pub fn async_http_client<A2: derive_rest_api::AsyncHttpClient>(self, client: A2) -> #builder_name<__C, A2> {
                 #builder_name {
-                    #(#field_names: self.#field_names),*,
+                    #(#field_names: self.#field_names,)*
                     __http_client: self.__http_client,
                     __async_http_client: std::option::Option::Some(client),
                     __base_url: self.__base_url,
@@ -168,9 +187,7 @@ pub(crate) fn generate_request_builder(input: syn::DeriveInput) -> syn::Result<p
                 #(#field_processing)*
 
                 // Construct the struct
-                std::result::Result::Ok(#struct_name {
-                    #(#build_fields),*
-                })
+                #struct_construction
             }
         }
 

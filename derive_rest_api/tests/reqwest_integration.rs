@@ -168,6 +168,7 @@ mod async_tests {
             &format!("https://jsonplaceholder.typicode.com{}", request.build_url().unwrap()),
             request.build_headers(),
             request.build_body().unwrap(),
+            None
         ).await;
 
         if let Ok(response) = result {
@@ -206,6 +207,7 @@ mod async_tests {
             &format!("https://jsonplaceholder.typicode.com{}", request.build_url().unwrap()),
             request.build_headers(),
             request.build_body().unwrap(),
+            None
         ).await;
 
         if let Ok(response) = result {

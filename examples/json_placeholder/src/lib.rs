@@ -1,7 +1,7 @@
 //! # JSON Placeholder API Client Example
 //!
 //! This crate demonstrates how to use `derive_rest_api` to create a type-safe
-//! REST API client for the JSON Placeholder API (https://jsonplaceholder.typicode.com).
+//! REST API client for the JSON Placeholder API (<https://jsonplaceholder.typicode.com>).
 //!
 //! ## Features Demonstrated
 //!

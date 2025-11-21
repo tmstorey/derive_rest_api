@@ -1,5 +1,6 @@
 //! HTTP client implementations for various backends.
 
+#[allow(dead_code)]
 #[derive(Clone, Debug, Default)]
 pub struct UnimplementedClient;
 

@@ -1,4 +1,4 @@
-use derive_rest_api_macros::RequestBuilder;
+use derive_rest_api::RequestBuilder;
 use serde::Serialize;
 use std::collections::HashMap;
 

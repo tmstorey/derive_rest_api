@@ -1,4 +1,4 @@
-use derive_rest_api_macros::RequestBuilder;
+use derive_rest_api::RequestBuilder;
 
 // Validation function for testing
 fn validate_positive(value: &u32) -> Result<(), String> {

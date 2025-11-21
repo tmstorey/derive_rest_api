@@ -1,4 +1,4 @@
-use derive_rest_api_macros::{ApiClient, RequestBuilder};
+use derive_rest_api::{ApiClient, RequestBuilder};
 
 // Mock error type for testing
 #[derive(Debug)]

@@ -302,10 +302,7 @@ pub struct DeletePost {
     path = "/users",
     response = Vec<User>
 )]
-pub struct ListUsers {
-    #[allow(dead_code)]
-    _marker: std::marker::PhantomData<()>,
-}
+pub struct ListUsers;
 
 /// Get a single user by ID
 ///

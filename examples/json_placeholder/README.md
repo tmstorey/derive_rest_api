@@ -136,8 +136,7 @@ use derive_rest_api::ReqwestBlockingClient;
 use json_placeholder::{JsonPlaceholderClient, JsonPlaceholderConfig};
 
 // Create client
-let client = JsonPlaceholderClient::<ReqwestBlockingClient>::with_client()
-    .with_config(JsonPlaceholderConfig);
+let client = JsonPlaceholderClient::new();
 
 // List all posts
 let posts = client.list_posts().send()?;

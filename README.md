@@ -134,6 +134,38 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 ```
 
+### With Ureq (Blocking)
+
+```rust
+use derive_rest_api::{RequestBuilder, UreqBlockingClient};
+use serde::Serialize;
+
+#[derive(RequestBuilder, Serialize)]
+#[request_builder(method = "POST", path = "/posts")]
+struct CreatePost {
+    #[request_builder(body)]
+    title: String,
+    #[request_builder(body)]
+    user_id: u64,
+}
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let client = UreqBlockingClient::new();
+
+    let request = CreatePostBuilder::new()
+        .title("Hello World".to_string())
+        .user_id(1)
+        .build()?;
+
+    let response = request.send_with_client(
+        &client,
+        "https://api.example.com"
+    )?;
+
+    Ok(())
+}
+```
+
 ### High-Level API Client
 
 For a more ergonomic experience, use the `ApiClient` derive macro to generate a high-level client that wraps your configuration and request types:
@@ -234,7 +266,7 @@ let config = MyApiConfig {
     user_agent: "my-app/1.0".to_string(),
 };
 
-let client = MyApiClient::new(config, http_client);
+let client = MyApiClient::new().with_config(config);
 client.get_user().id(123).send()?; // X-API-Key and User-Agent are auto-applied
 ```
 
@@ -254,38 +286,6 @@ struct SimpleConfig {
 }
 
 impl derive_rest_api::NoRequestConfiguration for SimpleConfig {}
-```
-
-### With Ureq (Blocking)
-
-```rust
-use derive_rest_api::{RequestBuilder, UreqBlockingClient};
-use serde::Serialize;
-
-#[derive(RequestBuilder, Serialize)]
-#[request_builder(method = "POST", path = "/posts")]
-struct CreatePost {
-    #[request_builder(body)]
-    title: String,
-    #[request_builder(body)]
-    user_id: u64,
-}
-
-fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let client = UreqBlockingClient::new();
-
-    let request = CreatePostBuilder::new()
-        .title("Hello World".to_string())
-        .user_id(1)
-        .build()?;
-
-    let response = request.send_with_client(
-        &client,
-        "https://api.example.com"
-    )?;
-
-    Ok(())
-}
 ```
 
 ## Error Handling

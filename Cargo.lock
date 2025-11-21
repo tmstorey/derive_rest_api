@@ -471,6 +471,12 @@ dependencies = [
 [[package]]
 name = "json_placeholder"
 version = "0.1.0"
+dependencies = [
+ "derive_rest_api",
+ "serde",
+ "serde_json",
+ "serde_qs",
+]
 
 [[package]]
 name = "libc"

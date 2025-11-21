@@ -198,3 +198,120 @@ fn test_config_suffix_stripping() {
     // Should generate GithubApiClient, not GithubApiConfigClient
     let _client = GithubApiClient::<MockClient>::with_client().with_config(config);
 }
+
+#[test]
+fn test_default_attribute() {
+    // Test that the default attribute causes the config to be initialized with Default::default()
+    #[derive(Clone, Default, ApiClient)]
+    #[api_client(
+        base_url = "https://api.example.com",
+        requests(GetUser),
+        default
+    )]
+    struct DefaultableConfig {
+        api_key: String,
+    }
+
+    impl derive_rest_api::NoRequestConfiguration for DefaultableConfig {}
+
+    #[derive(Clone, Default)]
+    struct MockClient;
+    impl derive_rest_api::HttpClient for MockClient {
+        type Error = MockError;
+        fn send(
+            &self,
+            _method: &str,
+            _url: &str,
+            _headers: std::collections::HashMap<String, String>,
+            _body: Option<Vec<u8>>,
+            _timeout: Option<std::time::Duration>,
+        ) -> Result<Vec<u8>, Self::Error> {
+            Ok(vec![])
+        }
+    }
+
+    // Test blocking client
+    let blocking_client = DefaultableClient::<MockClient>::with_client();
+
+    // Config should be initialized with default value
+    assert!(blocking_client.config().is_some());
+    assert_eq!(blocking_client.config().as_ref().unwrap().api_key, "");
+
+    // Test async client
+    #[derive(Clone, Default)]
+    struct MockAsyncClient;
+    impl derive_rest_api::AsyncHttpClient for MockAsyncClient {
+        type Error = MockError;
+        async fn send_async(
+            &self,
+            _method: &str,
+            _url: &str,
+            _headers: std::collections::HashMap<String, String>,
+            _body: Option<Vec<u8>>,
+            _timeout: Option<std::time::Duration>,
+        ) -> Result<Vec<u8>, Self::Error> {
+            Ok(vec![])
+        }
+    }
+
+    let async_client = DefaultableAsyncClient::<MockAsyncClient>::with_client();
+    assert!(async_client.config().is_some());
+    assert_eq!(async_client.config().as_ref().unwrap().api_key, "");
+}
+
+#[test]
+fn test_without_default_attribute() {
+    // Test that without the default attribute, config is None by default
+    #[derive(Clone, Default, ApiClient)]
+    #[api_client(
+        base_url = "https://api.example.com",
+        requests(GetUser)
+    )]
+    struct NonDefaultableConfig {
+        api_key: String,
+    }
+
+    impl derive_rest_api::NoRequestConfiguration for NonDefaultableConfig {}
+
+    #[derive(Clone, Default)]
+    struct MockClient;
+    impl derive_rest_api::HttpClient for MockClient {
+        type Error = MockError;
+        fn send(
+            &self,
+            _method: &str,
+            _url: &str,
+            _headers: std::collections::HashMap<String, String>,
+            _body: Option<Vec<u8>>,
+            _timeout: Option<std::time::Duration>,
+        ) -> Result<Vec<u8>, Self::Error> {
+            Ok(vec![])
+        }
+    }
+
+    // Test blocking client
+    let blocking_client = NonDefaultableClient::<MockClient>::with_client();
+
+    // Config should be None without the default attribute
+    assert!(blocking_client.config().is_none());
+
+    // Test async client
+    #[derive(Clone, Default)]
+    struct MockAsyncClient;
+    impl derive_rest_api::AsyncHttpClient for MockAsyncClient {
+        type Error = MockError;
+        async fn send_async(
+            &self,
+            _method: &str,
+            _url: &str,
+            _headers: std::collections::HashMap<String, String>,
+            _body: Option<Vec<u8>>,
+            _timeout: Option<std::time::Duration>,
+        ) -> Result<Vec<u8>, Self::Error> {
+            Ok(vec![])
+        }
+    }
+
+    let async_client = NonDefaultableAsyncClient::<MockAsyncClient>::with_client();
+    assert!(async_client.config().is_none());
+}

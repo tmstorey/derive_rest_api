@@ -259,6 +259,7 @@ fn test_default_attribute() {
     assert_eq!(async_client.config().as_ref().unwrap().api_key, "");
 }
 
+#[allow(dead_code)]
 #[test]
 fn test_without_default_attribute() {
     // Test that without the default attribute, config is None by default

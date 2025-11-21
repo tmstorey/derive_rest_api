@@ -1,0 +1,6 @@
+# WASM build artifacts
+pkg/
+target/
+
+# wasm-pack generated files
+**/*.rs.bk

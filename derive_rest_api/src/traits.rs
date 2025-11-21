@@ -128,6 +128,7 @@ pub trait AsyncHttpClient: Clone + Default  {
     /// # Errors
     ///
     /// Returns an error if the HTTP request fails
+    #[cfg(not(target_arch = "wasm32"))]
     fn send_async(
         &self,
         method: &str,
@@ -136,6 +137,29 @@ pub trait AsyncHttpClient: Clone + Default  {
         body: Option<Vec<u8>>,
         timeout: Option<std::time::Duration>,
     ) -> impl std::future::Future<Output = Result<Vec<u8>, Self::Error>> + Send;
+
+    /// Send an async HTTP request with the given parameters (WASM version)
+    ///
+    /// # Arguments
+    ///
+    /// - `method`: HTTP method (GET, POST, PUT, DELETE, etc.)
+    /// - `url`: Complete URL including query parameters
+    /// - `headers`: HTTP headers as key-value pairs
+    /// - `body`: Optional request body as bytes
+    /// - `timeout`: Optional timeout duration for the request
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the HTTP request fails
+    #[cfg(target_arch = "wasm32")]
+    fn send_async(
+        &self,
+        method: &str,
+        url: &str,
+        headers: HashMap<String, String>,
+        body: Option<Vec<u8>>,
+        timeout: Option<std::time::Duration>,
+    ) -> impl std::future::Future<Output = Result<Vec<u8>, Self::Error>>;
 }
 
 impl HttpClient for crate::clients::UnimplementedClient {

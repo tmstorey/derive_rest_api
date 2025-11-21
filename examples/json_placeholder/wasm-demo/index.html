@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSON Placeholder WASM Demo</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-top: 0;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        #status {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            border-left: 4px solid #007bff;
+            min-height: 20px;
+        }
+        #status.success {
+            border-left-color: #28a745;
+            background: #d4edda;
+        }
+        #status.error {
+            border-left-color: #dc3545;
+            background: #f8d7da;
+        }
+        .info {
+            background: #e7f3ff;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            border-left: 4px solid #0066cc;
+        }
+        .info p {
+            margin: 5px 0;
+        }
+        pre {
+            background: #282c34;
+            color: #abb2bf;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🦀 JSON Placeholder WASM Demo</h1>
+
+        <div class="info">
+            <p><strong>About:</strong> This demo shows the JSON Placeholder API client running in WebAssembly!</p>
+            <p>The library uses <code>derive_rest_api</code> with async/await support compiled to WASM.</p>
+        </div>
+
+        <button id="testButton" onclick="runTest()">Run API Demo</button>
+        <button id="greetButton" onclick="testGreet()" style="margin-left: 10px; background: #28a745;">Test WASM Connection</button>
+
+        <div id="status">
+            <em>Click "Test WASM Connection" first to verify the module loaded correctly, then run the full demo.</em>
+        </div>
+
+        <h3>Console Output</h3>
+        <p>Open your browser's developer console (F12) to see detailed output from the API calls.</p>
+    </div>
+
+    <script type="module">
+        import init, { run_demo, greet } from './pkg/json_placeholder_wasm.js';
+
+        // Initialize the WASM module
+        let wasmInitialized = false;
+
+        async function initWasm() {
+            if (wasmInitialized) return;
+
+            try {
+                await init();
+                wasmInitialized = true;
+                console.log("✅ WASM module initialized successfully");
+            } catch (err) {
+                console.error("❌ Failed to initialize WASM:", err);
+                document.getElementById('status').className = 'error';
+                document.getElementById('status').textContent = 'Failed to initialize WASM: ' + err;
+                throw err;
+            }
+        }
+
+        // Make functions available globally
+        window.runTest = async function() {
+            const button = document.getElementById('testButton');
+            const status = document.getElementById('status');
+
+            button.disabled = true;
+            status.className = '';
+            status.textContent = 'Initializing WASM and running demo... (check console for details)';
+
+            try {
+                await initWasm();
+                console.log("Starting API demo...");
+                const result = await run_demo();
+
+                status.className = 'success';
+                status.textContent = '✅ ' + result + ' Check the console for detailed output.';
+            } catch (err) {
+                console.error("Demo error:", err);
+                status.className = 'error';
+                status.textContent = '❌ Error: ' + err;
+            } finally {
+                button.disabled = false;
+            }
+        };
+
+        window.testGreet = async function() {
+            const button = document.getElementById('greetButton');
+            const status = document.getElementById('status');
+
+            button.disabled = true;
+            status.className = '';
+            status.textContent = 'Testing WASM connection...';
+
+            try {
+                await initWasm();
+                const greeting = greet("World");
+                console.log(greeting);
+
+                status.className = 'success';
+                status.textContent = '✅ WASM is working! Response: ' + greeting;
+            } catch (err) {
+                console.error("Greet error:", err);
+                status.className = 'error';
+                status.textContent = '❌ Error: ' + err;
+            } finally {
+                button.disabled = false;
+            }
+        };
+
+        // Auto-initialize on load
+        initWasm().catch(err => {
+            console.error("Failed to auto-initialize WASM:", err);
+        });
+    </script>
+</body>
+</html>

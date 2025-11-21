@@ -2,5 +2,6 @@
 members = [
     "derive_rest_api",
     "derive_rest_api_macros",
+    "examples/json_placeholder",
 ]
 resolver = "2"

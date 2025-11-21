@@ -37,13 +37,30 @@ pub(super) enum FieldKind {
     Header,
 }
 
+/// Default value behavior for a field
+#[derive(Debug, Clone)]
+pub(super) enum DefaultBehavior {
+    /// Field is required (no default)
+    Required,
+    /// Use Default::default() if not set
+    UseDefault,
+    /// Use a custom expression if not set
+    Custom(syn::Expr),
+}
+
+impl Default for DefaultBehavior {
+    fn default() -> Self {
+        DefaultBehavior::Required
+    }
+}
+
 /// Field-level attributes
 #[derive(Debug, Default)]
 pub(super) struct FieldAttributes {
     /// Use Into<T> for this setter
     pub into: bool,
-    /// Use Default::default() if not set
-    pub default: bool,
+    /// Default value behavior
+    pub default: DefaultBehavior,
     /// Validation function path (e.g., validate_email)
     pub validate: Option<syn::Path>,
     /// Where this field should go in the request
@@ -168,9 +185,17 @@ pub(super) fn parse_field_attributes(attrs: &[syn::Attribute]) -> syn::Result<Fi
                 return Ok(());
             }
 
-            // #[request_builder(default)]
+            // #[request_builder(default)] or #[request_builder(default = expr)]
             if meta.path.is_ident("default") {
-                result.default = true;
+                if meta.input.peek(syn::Token![=]) {
+                    // #[request_builder(default = expr)]
+                    let value = meta.value()?;
+                    let expr: syn::Expr = value.parse()?;
+                    result.default = DefaultBehavior::Custom(expr);
+                } else {
+                    // #[request_builder(default)]
+                    result.default = DefaultBehavior::UseDefault;
+                }
                 return Ok(());
             }
 

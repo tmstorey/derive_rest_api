@@ -113,6 +113,12 @@ pub struct Comment {
     pub body: String,
 }
 
+/// Represents a result object containing an id
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ResultId {
+    pub id: u32,
+}
+
 // ============================================================================
 // Request Structs - Posts
 // ============================================================================
@@ -182,7 +188,7 @@ pub struct CreatePostData {
 #[request_builder(
     method = "POST",
     path = "/posts",
-    response = Post
+    response = ResultId
 )]
 pub struct CreatePost {
     /// The post data to create
@@ -217,7 +223,7 @@ pub struct UpdatePostData {
 #[request_builder(
     method = "PUT",
     path = "/posts/{id}",
-    response = Post
+    response = ResultId
 )]
 pub struct UpdatePost {
     /// The post ID to update
@@ -279,7 +285,6 @@ pub struct PatchPost {
 #[request_builder(
     method = "DELETE",
     path = "/posts/{id}",
-    response = ()
 )]
 pub struct DeletePost {
     /// The post ID to delete

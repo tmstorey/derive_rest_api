@@ -27,6 +27,13 @@ pub enum RequestError {
         source: serde_json::Error,
     },
 
+    /// Request body serialization failed.
+    #[error("Failed to deserialize response body: {source}")]
+    ResponseDeserializationError {
+        #[source]
+        source: serde_json::Error,
+    },
+
     /// Field validation failed.
     #[error("Validation failed for field '{field}': {message}")]
     ValidationError { field: String, message: String },

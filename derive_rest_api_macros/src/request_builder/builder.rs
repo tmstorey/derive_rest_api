@@ -180,7 +180,7 @@ pub(super) fn generate_builder_send_methods(
         Some(_) => quote! {
             let bytes = response?;
             serde_json::from_slice(&bytes)
-                .map_err(|e| derive_rest_api::RequestError::BodySerializationError { source: e })
+                .map_err(|e| derive_rest_api::RequestError::ResponseDeserializationError { source: e })
         },
         _ => quote! { response },
     };

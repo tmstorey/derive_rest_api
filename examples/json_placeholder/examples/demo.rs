@@ -60,8 +60,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             user_id: 1,
         })
         .send()?;
-    println!("   Created post with ID: {:?}", new_post.id);
-    println!("   Title: {}", new_post.title);
+    println!("   Created post with ID: {}", new_post.id);
     println!();
 
     // ========================================================================
@@ -77,7 +76,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             user_id: 1,
         })
         .send()?;
-    println!("   Updated title: {}", updated_post.title);
+    println!("   Updated id: {}", updated_post.id);
     println!();
 
     // ========================================================================

@@ -78,7 +78,7 @@ fn test_configure_request_with_api_client() {
         user_agent: "my-app/1.0".to_string(),
     };
 
-    let client = MyApiClient::<MockHttpClient>::with_client().with_config(config);
+    let client = MyApiClient::<MockHttpClient>::new_with_client(MockHttpClient).with_config(config);
 
     // The builder should be pre-configured with headers from the config
     let result = client.get_user()
@@ -95,7 +95,7 @@ fn test_manual_header_override() {
         user_agent: "my-app/1.0".to_string(),
     };
 
-    let client = MyApiClient::<MockHttpClient>::with_client().with_config(config);
+    let client = MyApiClient::<MockHttpClient>::new_with_client(MockHttpClient).with_config(config);
 
     // Manually added headers should also work
     let builder = client.get_user()

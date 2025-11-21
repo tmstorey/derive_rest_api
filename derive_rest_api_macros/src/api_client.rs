@@ -253,8 +253,8 @@ fn generate_blocking_client(
             #[doc = concat!("Creates a new [`", stringify!(#client_name), "`] with a custom HTTP client type.")]
             #[doc = ""]
             #[doc = "Use this method when you want to specify a different client than the default."]
-            pub fn with_client() -> Self {
-                let client = C::default();
+            pub fn new_with_client(client: impl std::convert::Into<C>) -> Self {
+                let client = client.into();
                 Self {
                     config: #initial_config,
                     base_url: #base_url.to_string(),
@@ -367,8 +367,8 @@ fn generate_async_client(
             #[doc = concat!("Creates a new [`", stringify!(#client_name), "`] with a custom async HTTP client type.")]
             #[doc = ""]
             #[doc = "Use this method when you want to specify a different client than the default."]
-            pub fn with_client() -> Self {
-                let client = A::default();
+            pub fn new_with_client(client: impl std::convert::Into<A>) -> Self {
+                let client = client.into();
                 Self {
                     config: #initial_config,
                     base_url: #base_url.to_string(),

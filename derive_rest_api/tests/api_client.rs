@@ -69,7 +69,7 @@ fn test_client_struct_generation() {
         }
     }
 
-    let client = MyApiClient::<MockClient>::with_client().with_config(config);
+    let client = MyApiClient::<MockClient>::new_with_client(MockClient).with_config(config);
 
     // Verify we can access the config
     assert_eq!(client.config().clone().unwrap().api_key, "test_key");
@@ -98,7 +98,7 @@ fn test_async_client_struct_generation() {
         }
     }
 
-    let client = MyApiAsyncClient::<MockAsyncClient>::with_client().with_config(config);
+    let client: MyApiAsyncClient<MockAsyncClient> = MyApiAsyncClient::<MockAsyncClient>::new_with_client(MockAsyncClient).with_config(config);
 
     // Verify we can access the config
     assert_eq!(client.config().clone().unwrap().api_key, "test_key");
@@ -122,7 +122,7 @@ fn test_method_generation() {
         }
     }
 
-    let client = MyApiClient::<MockClient>::with_client();
+    let client: MyApiClient<MockClient> = MyApiClient::<MockClient>::new_with_client(MockClient);
 
     // Test that methods exist and return builders
     let _get_user_builder = client.get_user();
@@ -152,7 +152,7 @@ fn test_with_base_url() {
         }
     }
 
-    let client = MyApiClient::<MockClient>::with_client()
+    let client = MyApiClient::<MockClient>::new_with_client(MockClient)
         .with_config(config)
         .with_base_url("https://custom.example.com");
 
@@ -196,7 +196,7 @@ fn test_config_suffix_stripping() {
     }
 
     // Should generate GithubApiClient, not GithubApiConfigClient
-    let _client = GithubApiClient::<MockClient>::with_client().with_config(config);
+    let _client = GithubApiClient::<MockClient>::new_with_client(MockClient).with_config(config);
 }
 
 #[test]
@@ -231,7 +231,7 @@ fn test_default_attribute() {
     }
 
     // Test blocking client
-    let blocking_client = DefaultableClient::<MockClient>::with_client();
+    let blocking_client = DefaultableClient::<MockClient>::new_with_client(MockClient);
 
     // Config should be initialized with default value
     assert!(blocking_client.config().is_some());
@@ -254,7 +254,7 @@ fn test_default_attribute() {
         }
     }
 
-    let async_client = DefaultableAsyncClient::<MockAsyncClient>::with_client();
+    let async_client = DefaultableAsyncClient::<MockAsyncClient>::new_with_client(MockAsyncClient);
     assert!(async_client.config().is_some());
     assert_eq!(async_client.config().as_ref().unwrap().api_key, "");
 }
@@ -291,7 +291,7 @@ fn test_without_default_attribute() {
     }
 
     // Test blocking client
-    let blocking_client = NonDefaultableClient::<MockClient>::with_client();
+    let blocking_client = NonDefaultableClient::<MockClient>::new_with_client(MockClient);
 
     // Config should be None without the default attribute
     assert!(blocking_client.config().is_none());
@@ -313,6 +313,6 @@ fn test_without_default_attribute() {
         }
     }
 
-    let async_client = NonDefaultableAsyncClient::<MockAsyncClient>::with_client();
+    let async_client = NonDefaultableAsyncClient::<MockAsyncClient>::new_with_client(MockAsyncClient);
     assert!(async_client.config().is_none());
 }

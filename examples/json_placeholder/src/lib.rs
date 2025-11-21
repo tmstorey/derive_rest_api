@@ -14,30 +14,30 @@
 //!
 //! ## Example Usage
 //!
-//! ```rust,ignore
-//! use json_placeholder::{JsonPlaceholderClient, JsonPlaceholderConfig, CreatePostData};
-//! use derive_rest_api::ReqwestBlockingClient;
+//! ```rust
+//! use json_placeholder::{JsonPlaceholderClient, CreatePostData};
 //!
-//! let client = JsonPlaceholderClient::<ReqwestBlockingClient>::with_client()
-//!     .with_config(JsonPlaceholderConfig);
+//! fn main() -> Result<(), Box<dyn std::error::Error>> {
+//!     let client = JsonPlaceholderClient::new();
 //!
-//! // List all posts
-//! let posts = client.list_posts().send()?;
+//!     // List all posts
+//!     let posts = client.list_posts().send()?;
 //!
-//! // Get a specific post
-//! let post = client.get_post().id(1).send()?;
+//!     // Get a specific post
+//!     let post = client.get_post().id(1).send()?;
 //!
-//! // Create a new post
-//! let new_post = client.create_post()
-//!     .data(CreatePostData {
-//!         title: "Hello World".to_string(),
-//!         body: "This is my first post!".to_string(),
-//!         user_id: 1,
-//!     })
-//!     .send()?;
+//!     // Create a new post
+//!     let new_post = client.create_post()
+//!         .data(CreatePostData {
+//!             title: "Hello World".to_string(),
+//!             body: "This is my first post!".to_string(),
+//!             user_id: 1,
+//!         })
+//!         .send()?;
+//! 
+//!     Ok(())
+//! }
 //! ```
-
-#![allow(non_snake_case)] // Allow generated code to use its own naming conventions
 
 use derive_rest_api::{ApiClient, RequestBuilder};
 use serde::{Deserialize, Serialize};

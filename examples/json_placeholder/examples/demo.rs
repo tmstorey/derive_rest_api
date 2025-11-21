@@ -5,17 +5,15 @@
 //! cargo run --example demo
 //! ```
 
-use derive_rest_api::ReqwestBlockingClient;
 use json_placeholder::{
-    CreatePostData, JsonPlaceholderClient, JsonPlaceholderConfig, PatchPostData, UpdatePostData,
+    CreatePostData, JsonPlaceholderClient, PatchPostData, UpdatePostData,
 };
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("=== JSON Placeholder API Demo ===\n");
 
     // Create API client
-    let client = JsonPlaceholderClient::<ReqwestBlockingClient>::with_client()
-        .with_config(JsonPlaceholderConfig);
+    let client = JsonPlaceholderClient::new();
 
     // ========================================================================
     // Posts - List

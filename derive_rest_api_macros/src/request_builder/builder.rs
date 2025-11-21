@@ -4,7 +4,7 @@
 //! and the send/send_async methods that use embedded HTTP clients.
 
 use crate::utils::{extract_doc_attributes, option_inner_type};
-use super::attributes::{StructAttributes, parse_field_attributes};
+use super::attributes::{StructAttributes, parse_field_attributes, DefaultBehavior};
 use proc_macro2::TokenStream;
 use quote::quote;
 use syn;
@@ -106,7 +106,21 @@ pub(super) fn generate_field_processing<'a>(
 
         // Parse field-level attributes
         let field_attrs = parse_field_attributes(&field.attrs).unwrap_or_default();
-        let use_default = struct_attrs.default || field_attrs.default;
+
+        // Determine the default behavior for this field
+        let default_behavior = match &field_attrs.default {
+            DefaultBehavior::Required => {
+                // If struct has default attribute, use Default::default()
+                if struct_attrs.default {
+                    DefaultBehavior::UseDefault
+                } else {
+                    DefaultBehavior::Required
+                }
+            },
+            // Field-level default overrides struct-level
+            other => other.clone(),
+        };
+
         let validate_fn = field_attrs.validate.as_ref();
 
         // Generate value extraction
@@ -115,15 +129,26 @@ pub(super) fn generate_field_processing<'a>(
             quote! {
                 let #temp_var = self.#field_name;
             }
-        } else if use_default {
-            // Field has default attribute, use Default::default() if not set
-            quote! {
-                let #temp_var = self.#field_name.unwrap_or_default();
-            }
         } else {
-            // Field is required, error if not set
-            quote! {
-                let #temp_var = self.#field_name.ok_or_else(|| derive_rest_api::RequestError::missing_field(#field_name_str))?;
+            match &default_behavior {
+                DefaultBehavior::Required => {
+                    // Field is required, error if not set
+                    quote! {
+                        let #temp_var = self.#field_name.ok_or_else(|| derive_rest_api::RequestError::missing_field(#field_name_str))?;
+                    }
+                },
+                DefaultBehavior::UseDefault => {
+                    // Use Default::default() if not set
+                    quote! {
+                        let #temp_var = self.#field_name.unwrap_or_default();
+                    }
+                },
+                DefaultBehavior::Custom(expr) => {
+                    // Use custom expression if not set
+                    quote! {
+                        let #temp_var = self.#field_name.unwrap_or_else(|| #expr);
+                    }
+                },
             }
         };
 

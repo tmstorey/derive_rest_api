@@ -277,3 +277,86 @@ fn test_struct_default_with_field_override() {
     assert_eq!(config.name, "test");
     assert_eq!(config.enabled, false); // Default
 }
+
+#[test]
+fn test_custom_default_value() {
+    #[derive(RequestBuilder, Debug, PartialEq)]
+    struct Config {
+        name: String,
+        #[request_builder(default = 5000)]
+        timeout: u32,
+        #[request_builder(default = 3)]
+        retries: usize,
+    }
+
+    // Build without setting fields with custom default
+    let config = ConfigBuilder::new()
+        .name("production".to_string())
+        .build()
+        .unwrap();
+
+    assert_eq!(config.name, "production");
+    assert_eq!(config.timeout, 5000); // Custom default
+    assert_eq!(config.retries, 3);    // Custom default
+}
+
+#[test]
+fn test_custom_default_with_override() {
+    #[derive(RequestBuilder, Debug, PartialEq)]
+    struct Config {
+        name: String,
+        #[request_builder(default = 5000)]
+        timeout: u32,
+    }
+
+    // Build with overriding the custom default
+    let config = ConfigBuilder::new()
+        .name("staging".to_string())
+        .timeout(10000)
+        .build()
+        .unwrap();
+
+    assert_eq!(config.name, "staging");
+    assert_eq!(config.timeout, 10000); // Overridden value
+}
+
+#[test]
+fn test_custom_default_with_expression() {
+    #[derive(RequestBuilder, Debug, PartialEq)]
+    struct Config {
+        #[request_builder(default = String::from("default_name"))]
+        name: String,
+        #[request_builder(default = vec![1, 2, 3])]
+        numbers: Vec<i32>,
+    }
+
+    // Build without setting fields - should use custom expressions
+    let config = ConfigBuilder::new()
+        .build()
+        .unwrap();
+
+    assert_eq!(config.name, "default_name");
+    assert_eq!(config.numbers, vec![1, 2, 3]);
+}
+
+#[test]
+fn test_mixing_default_and_custom_default() {
+    #[derive(RequestBuilder, Debug, PartialEq)]
+    struct Config {
+        #[request_builder(default)]
+        flag: bool,
+        #[request_builder(default = 100)]
+        count: u32,
+        #[request_builder(default = "test".to_string())]
+        name: String,
+    }
+
+    // Build without setting any fields
+    let config = ConfigBuilder::new()
+        .build()
+        .unwrap();
+
+    assert_eq!(config.flag, false);         // Default::default()
+    assert_eq!(config.count, 100);          // Custom value
+    assert_eq!(config.name, "test");        // Custom expression
+}

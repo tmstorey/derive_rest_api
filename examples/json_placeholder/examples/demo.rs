@@ -5,9 +5,7 @@
 //! cargo run --example demo
 //! ```
 
-use json_placeholder::{
-    CreatePostData, JsonPlaceholderClient, PatchPostData, UpdatePostData,
-};
+use json_placeholder::JsonPlaceholderClient;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("=== JSON Placeholder API Demo ===\n");
@@ -52,11 +50,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("✏️  Creating a new post...");
     let new_post = client
         .create_post()
-        .data(CreatePostData {
-            title: "Hello from derive_rest_api!".to_string(),
-            body: "This post was created using the derive_rest_api library. It makes building type-safe REST clients easy!".to_string(),
-            user_id: 1,
-        })
+        .title("Hello from derive_rest_api!".to_string())
+        .body("This post was created using the derive_rest_api library. It makes building type-safe REST clients easy!".to_string())
+        .user_id(1)
         .send()?;
     println!("   Created post with ID: {}", new_post.id);
     println!();
@@ -68,11 +64,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let updated_post = client
         .update_post()
         .id(1)
-        .data(UpdatePostData {
-            title: "Updated Title".to_string(),
-            body: "This post has been completely updated.".to_string(),
-            user_id: 1,
-        })
+        .title("Updated Title".to_string())
+        .body("This post has been completely updated.".to_string())
+        .user_id(1)
         .send()?;
     println!("   Updated id: {}", updated_post.id);
     println!();
@@ -84,11 +78,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let patched_post = client
         .patch_post()
         .id(1)
-        .data(PatchPostData {
-            title: Some("Partially Updated Title".to_string()),
-            body: None,
-            user_id: None,
-        })
+        .title("Partially Updated Title".to_string())
         .send()?;
     println!("   Patched title: {}", patched_post.title);
     println!();

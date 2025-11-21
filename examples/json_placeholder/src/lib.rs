@@ -15,7 +15,7 @@
 //! ## Example Usage
 //!
 //! ```rust
-//! use json_placeholder::{JsonPlaceholderClient, CreatePostData};
+//! use json_placeholder::JsonPlaceholderClient;
 //!
 //! fn main() -> Result<(), Box<dyn std::error::Error>> {
 //!     let client = JsonPlaceholderClient::new();
@@ -26,15 +26,13 @@
 //!     // Get a specific post
 //!     let post = client.get_post().id(1).send()?;
 //!
-//!     // Create a new post
+//!     // Create a new post using the builder pattern
 //!     let new_post = client.create_post()
-//!         .data(CreatePostData {
-//!             title: "Hello World".to_string(),
-//!             body: "This is my first post!".to_string(),
-//!             user_id: 1,
-//!         })
+//!         .title("Hello World".to_string())
+//!         .body("This is my first post!".to_string())
+//!         .user_id(1)
 //!         .send()?;
-//! 
+//!
 //!     Ok(())
 //! }
 //! ```
@@ -163,25 +161,14 @@ pub struct GetPost {
     pub id: u32,
 }
 
-/// Data for creating a new post
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct CreatePostData {
-    pub title: String,
-    pub body: String,
-    #[serde(rename = "userId")]
-    pub user_id: u32,
-}
-
 /// Create a new post
 ///
 /// # Example
 /// ```rust,ignore
 /// let new_post = client.create_post()
-///     .data(CreatePostData {
-///         title: "Hello".to_string(),
-///         body: "World".to_string(),
-///         user_id: 1,
-///     })
+///     .title("Hello".to_string())
+///     .body("World".to_string())
+///     .user_id(1)
 ///     .send()?;
 /// ```
 #[derive(RequestBuilder, Serialize)]
@@ -191,17 +178,16 @@ pub struct CreatePostData {
     response = ResultId
 )]
 pub struct CreatePost {
-    /// The post data to create
+    /// The post title
     #[request_builder(body)]
-    #[serde(flatten)]
-    pub data: CreatePostData,
-}
-
-/// Data for updating a post
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct UpdatePostData {
     pub title: String,
+
+    /// The post body/content
+    #[request_builder(body)]
     pub body: String,
+
+    /// The ID of the user creating the post
+    #[request_builder(body)]
     #[serde(rename = "userId")]
     pub user_id: u32,
 }
@@ -212,11 +198,9 @@ pub struct UpdatePostData {
 /// ```rust,ignore
 /// let updated = client.update_post()
 ///     .id(1)
-///     .data(UpdatePostData {
-///         title: "Updated".to_string(),
-///         body: "New content".to_string(),
-///         user_id: 1,
-///     })
+///     .title("Updated".to_string())
+///     .body("New content".to_string())
+///     .user_id(1)
 ///     .send()?;
 /// ```
 #[derive(RequestBuilder, Serialize)]
@@ -229,21 +213,18 @@ pub struct UpdatePost {
     /// The post ID to update
     pub id: u32,
 
-    /// The updated post data
+    /// The post title
     #[request_builder(body)]
-    #[serde(flatten)]
-    pub data: UpdatePostData,
-}
+    pub title: String,
 
-/// Data for partially updating a post
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
-pub struct PatchPostData {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub title: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub body: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none", rename = "userId")]
-    pub user_id: Option<u32>,
+    /// The post body/content
+    #[request_builder(body)]
+    pub body: String,
+
+    /// The ID of the user
+    #[request_builder(body)]
+    #[serde(rename = "userId")]
+    pub user_id: u32,
 }
 
 /// Partially update a post (PATCH)
@@ -253,10 +234,7 @@ pub struct PatchPostData {
 /// // Only update the title
 /// let patched = client.patch_post()
 ///     .id(1)
-///     .data(PatchPostData {
-///         title: Some("New Title".to_string()),
-///         ..Default::default()
-///     })
+///     .title("New Title".to_string())
 ///     .send()?;
 /// ```
 #[derive(RequestBuilder, Serialize)]
@@ -269,10 +247,18 @@ pub struct PatchPost {
     /// The post ID to patch
     pub id: u32,
 
-    /// The partial update data
+    /// The post title (optional)
     #[request_builder(body)]
-    #[serde(flatten)]
-    pub data: PatchPostData,
+    pub title: Option<String>,
+
+    /// The post body/content (optional)
+    #[request_builder(body)]
+    pub body: Option<String>,
+
+    /// The ID of the user (optional)
+    #[request_builder(body)]
+    #[serde(rename = "userId")]
+    pub user_id: Option<u32>,
 }
 
 /// Delete a post

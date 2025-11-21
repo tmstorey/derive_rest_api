@@ -182,7 +182,7 @@ pub(crate) fn generate_request_builder(input: syn::DeriveInput) -> syn::Result<p
             #[doc = "# Errors"]
             #[doc = ""]
             #[doc = "Returns an error if any required fields are not set or if validation fails."]
-            pub fn build(self) -> std::result::Result<#struct_name, derive_rest_api::RequestError> {
+            pub fn build(self) -> std::result::Result<#struct_name, derive_rest_api::RestApiError> {
                 // Extract and validate fields
                 #(#field_processing)*
 

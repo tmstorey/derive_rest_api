@@ -50,7 +50,7 @@ pub(super) fn generate_http_methods_impl(
                 #[doc = "# Errors"]
                 #[doc = ""]
                 #[doc = "Returns an error if any required path parameters are not set or if query serialization fails."]
-                pub fn build_url(&self) -> std::result::Result<std::string::String, derive_rest_api::RequestError> {
+                pub fn build_url(&self) -> std::result::Result<std::string::String, derive_rest_api::RestApiError> {
                     let mut path = std::string::String::from(#path_template);
                     #(#path_replacements)*
                     #query_serialization
@@ -88,7 +88,7 @@ fn generate_path_replacements(
                 quote! {
                     path = path.replace(#placeholder, &self.#field_name
                         .as_ref()
-                        .ok_or_else(|| derive_rest_api::RequestError::missing_path_parameter(#param))?
+                        .ok_or_else(|| derive_rest_api::RestApiError::missing_path_parameter(#param))?
                         .to_string());
                 }
             } else {
@@ -155,7 +155,7 @@ fn generate_query_serialization(
 
         let config = #config_expr;
         let query_string = config.serialize_string(&query_params)
-            .map_err(|e| derive_rest_api::RequestError::QuerySerializationError { source: e })?;
+            .map_err(|e| derive_rest_api::RestApiError::QuerySerializationError { source: e })?;
 
         if !query_string.is_empty() {
             path.push('?');
@@ -169,7 +169,7 @@ fn generate_build_body_method(body_fields: &[&syn::Field]) -> TokenStream {
     if body_fields.is_empty() {
         return quote! {
             #[doc = "Builds the request body (always returns None as there are no body fields)."]
-            pub fn build_body(&self) -> std::result::Result<std::option::Option<std::vec::Vec<u8>>, derive_rest_api::RequestError> {
+            pub fn build_body(&self) -> std::result::Result<std::option::Option<std::vec::Vec<u8>>, derive_rest_api::RestApiError> {
                 std::result::Result::Ok(std::option::Option::None)
             }
         };
@@ -204,7 +204,7 @@ fn generate_build_body_method(body_fields: &[&syn::Field]) -> TokenStream {
         #[doc = "# Errors"]
         #[doc = ""]
         #[doc = "Returns an error if JSON serialization fails."]
-        pub fn build_body(&self) -> std::result::Result<std::option::Option<std::vec::Vec<u8>>, derive_rest_api::RequestError> {
+        pub fn build_body(&self) -> std::result::Result<std::option::Option<std::vec::Vec<u8>>, derive_rest_api::RestApiError> {
             #[derive(serde::Serialize)]
             struct BodyParams {
                 #(#body_struct_fields),*
@@ -215,7 +215,7 @@ fn generate_build_body_method(body_fields: &[&syn::Field]) -> TokenStream {
             };
 
             let json = serde_json::to_vec(&body_params)
-                .map_err(|e| derive_rest_api::RequestError::BodySerializationError { source: e })?;
+                .map_err(|e| derive_rest_api::RestApiError::BodySerializationError { source: e })?;
 
             std::result::Result::Ok(std::option::Option::Some(json))
         }
@@ -276,14 +276,14 @@ fn generate_send_with_client_method(struct_attrs: &StructAttributes) -> TokenStr
             &self,
             client: &C,
             base_url: &str,
-        ) -> std::result::Result<std::vec::Vec<u8>, derive_rest_api::RequestError> {
-            let path = self.build_url().map_err(|e| derive_rest_api::RequestError::UrlBuildError { source: std::boxed::Box::new(e) })?;
+        ) -> std::result::Result<std::vec::Vec<u8>, derive_rest_api::RestApiError> {
+            let path = self.build_url().map_err(|e| derive_rest_api::RestApiError::UrlBuildError { source: std::boxed::Box::new(e) })?;
             let url = format!("{}{}", base_url, path);
             let headers = self.build_headers();
             let body = self.build_body()?;
 
             client.send(#method_value, &url, headers, body, std::option::Option::None)
-                .map_err(|e| derive_rest_api::RequestError::http_error(e))
+                .map_err(|e| derive_rest_api::RestApiError::http_error(e))
         }
     }
 }

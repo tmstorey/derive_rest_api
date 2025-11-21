@@ -4,7 +4,7 @@ use std::error::Error as StdError;
 
 /// Errors that can occur during request building and execution.
 #[derive(Debug, thiserror::Error)]
-pub enum RequestError {
+pub enum RestApiError {
     /// A required field was not set in the builder.
     #[error("Missing required field: {field}")]
     MissingField { field: String },
@@ -46,7 +46,7 @@ pub enum RequestError {
     #[error("Failed to build URL: {source}")]
     UrlBuildError {
         #[source]
-        source: Box<RequestError>,
+        source: Box<RestApiError>,
     },
 
     /// HTTP request failed with a client-specific error.
@@ -56,7 +56,7 @@ pub enum RequestError {
     HttpError(Box<dyn StdError + Send + Sync>),
 }
 
-impl RequestError {
+impl RestApiError {
     /// Creates a new `MissingField` error.
     pub fn missing_field(field: impl Into<String>) -> Self {
         Self::MissingField {

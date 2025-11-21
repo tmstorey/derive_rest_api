@@ -134,7 +134,7 @@ pub(super) fn generate_field_processing<'a>(
                 DefaultBehavior::Required => {
                     // Field is required, error if not set
                     quote! {
-                        let #temp_var = self.#field_name.ok_or_else(|| derive_rest_api::RequestError::missing_field(#field_name_str))?;
+                        let #temp_var = self.#field_name.ok_or_else(|| derive_rest_api::RestApiError::missing_field(#field_name_str))?;
                     }
                 },
                 DefaultBehavior::UseDefault => {
@@ -158,13 +158,13 @@ pub(super) fn generate_field_processing<'a>(
                 // Optional field: validate if Some
                 quote! {
                     if let std::option::Option::Some(ref value) = #temp_var {
-                        #validate_fn(value).map_err(|e| derive_rest_api::RequestError::validation_error(#field_name_str, e))?;
+                        #validate_fn(value).map_err(|e| derive_rest_api::RestApiError::validation_error(#field_name_str, e))?;
                     }
                 }
             } else {
                 // Non-optional field: always validate
                 quote! {
-                    #validate_fn(&#temp_var).map_err(|e| derive_rest_api::RequestError::validation_error(#field_name_str, e))?;
+                    #validate_fn(&#temp_var).map_err(|e| derive_rest_api::RestApiError::validation_error(#field_name_str, e))?;
                 }
             }
         } else {
@@ -205,7 +205,7 @@ pub(super) fn generate_builder_send_methods(
         Some(_) => quote! {
             let bytes = response?;
             serde_json::from_slice(&bytes)
-                .map_err(|e| derive_rest_api::RequestError::ResponseDeserializationError { source: e })
+                .map_err(|e| derive_rest_api::RestApiError::ResponseDeserializationError { source: e })
         },
         _ => quote! { response },
     };
@@ -223,18 +223,18 @@ pub(super) fn generate_builder_send_methods(
             #[doc = "- URL building fails"]
             #[doc = "- Body serialization fails"]
             #[doc = "- The HTTP request fails"]
-            pub fn send(mut self) -> std::result::Result<#return_type, derive_rest_api::RequestError> {
+            pub fn send(mut self) -> std::result::Result<#return_type, derive_rest_api::RestApiError> {
                 // Extract client and base URL before building
                 let client = self.__http_client.take()
-                    .ok_or_else(|| derive_rest_api::RequestError::missing_field("http_client"))?;
+                    .ok_or_else(|| derive_rest_api::RestApiError::missing_field("http_client"))?;
 
                 let base_url = self.__base_url.take()
-                    .ok_or_else(|| derive_rest_api::RequestError::MissingBaseUrl)?;
+                    .ok_or_else(|| derive_rest_api::RestApiError::MissingBaseUrl)?;
 
                 let timeout = self.__timeout.take();
                 let dynamic_headers = self.__dynamic_headers.clone();
                 let request = self.build()?;
-                let path = request.build_url().map_err(|e| derive_rest_api::RequestError::UrlBuildError { source: std::boxed::Box::new(e) })?;
+                let path = request.build_url().map_err(|e| derive_rest_api::RestApiError::UrlBuildError { source: std::boxed::Box::new(e) })?;
                 let url = format!("{}{}", base_url, path);
                 let mut headers = request.build_headers();
                 // Merge dynamic headers (these override request headers)
@@ -242,7 +242,7 @@ pub(super) fn generate_builder_send_methods(
                 let body = request.build_body()?;
 
                 let response = client.send(#method_value, &url, headers, body, timeout)
-                    .map_err(|e| derive_rest_api::RequestError::http_error(e));
+                    .map_err(|e| derive_rest_api::RestApiError::http_error(e));
 
                 #return_value
             }
@@ -260,18 +260,18 @@ pub(super) fn generate_builder_send_methods(
             #[doc = "- URL building fails"]
             #[doc = "- Body serialization fails"]
             #[doc = "- The HTTP request fails"]
-            pub async fn send_async(mut self) -> std::result::Result<#return_type, derive_rest_api::RequestError> {
+            pub async fn send_async(mut self) -> std::result::Result<#return_type, derive_rest_api::RestApiError> {
                 // Extract client and base URL before building
                 let client = self.__async_http_client.take()
-                    .ok_or_else(|| derive_rest_api::RequestError::missing_field("async_http_client"))?;
+                    .ok_or_else(|| derive_rest_api::RestApiError::missing_field("async_http_client"))?;
 
                 let base_url = self.__base_url.take()
-                    .ok_or_else(|| derive_rest_api::RequestError::MissingBaseUrl)?;
+                    .ok_or_else(|| derive_rest_api::RestApiError::MissingBaseUrl)?;
 
                 let timeout = self.__timeout.take();
                 let dynamic_headers = self.__dynamic_headers.clone();
                 let request = self.build()?;
-                let path = request.build_url().map_err(|e| derive_rest_api::RequestError::UrlBuildError { source: std::boxed::Box::new(e) })?;
+                let path = request.build_url().map_err(|e| derive_rest_api::RestApiError::UrlBuildError { source: std::boxed::Box::new(e) })?;
                 let url = format!("{}{}", base_url, path);
                 let mut headers = request.build_headers();
                 // Merge dynamic headers (these override request headers)
@@ -279,7 +279,7 @@ pub(super) fn generate_builder_send_methods(
                 let body = request.build_body()?;
 
                 let response = client.send_async(#method_value, &url, headers, body, timeout).await
-                    .map_err(|e| derive_rest_api::RequestError::http_error(e));
+                    .map_err(|e| derive_rest_api::RestApiError::http_error(e));
 
                 #return_value
             }

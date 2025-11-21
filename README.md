@@ -290,10 +290,10 @@ impl derive_rest_api::NoRequestConfiguration for SimpleConfig {}
 
 ## Error Handling
 
-The library uses `thiserror` for type-safe error handling. All operations that can fail return a `Result<T, RequestError>`:
+The library uses `thiserror` for type-safe error handling. All operations that can fail return a `Result<T, RestApiError>`:
 
 ```rust
-use derive_rest_api::{RequestBuilder, RequestError};
+use derive_rest_api::{RequestBuilder, RestApiError};
 
 #[derive(RequestBuilder)]
 #[request_builder(method = "GET", path = "/users/{id}")]
@@ -301,17 +301,17 @@ struct GetUser {
     id: u64,
 }
 
-fn example() -> Result<(), RequestError> {
+fn example() -> Result<(), RestApiError> {
     let request = GetUserBuilder::new()
         .id(123)
         .build()?;
 
     match request.build_url() {
         Ok(url) => println!("URL: {}", url),
-        Err(RequestError::MissingPathParameter { param }) => {
+        Err(RestApiError::MissingPathParameter { param }) => {
             eprintln!("Missing parameter: {}", param);
         }
-        Err(RequestError::QuerySerializationError { source }) => {
+        Err(RestApiError::QuerySerializationError { source }) => {
             eprintln!("Query error: {}", source);
         }
         Err(e) => {

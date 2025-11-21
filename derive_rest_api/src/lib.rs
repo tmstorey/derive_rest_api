@@ -47,7 +47,7 @@
 //! For a more ergonomic API, use `#[derive(ApiClient)]` to generate a high-level client:
 //!
 //! ```rust,ignore
-//! use derive_rest_api::{ApiClient, RequestBuilder, RequestError};
+//! use derive_rest_api::{ApiClient, RequestBuilder, RestApiError};
 //! use serde::Serialize;
 //!
 //! #[derive(RequestBuilder, Serialize)]
@@ -70,7 +70,7 @@
 //! )]
 //! struct MyApi;
 //!
-//! fn main() -> Result<(), RequestError> {
+//! fn main() -> Result<(), RestApiError> {
 //!     let client = MyApiClient::new();
 //!
 //!     // Methods are pre-configured with base URL and HTTP client
@@ -82,17 +82,17 @@
 //!
 //! ## Error Handling
 //!
-//! All operations return `Result<T, RequestError>` with specific error variants:
+//! All operations return `Result<T, RestApiError>` with specific error variants:
 //!
 //! ```rust,ignore
-//! use derive_rest_api::{RequestBuilder, RequestError};
+//! use derive_rest_api::{RequestBuilder, RestApiError};
 //!
 //! match request.build() {
 //!     Ok(req) => { /* ... */ },
-//!     Err(RequestError::MissingField { field }) => {
+//!     Err(RestApiError::MissingField { field }) => {
 //!         eprintln!("Missing field: {}", field);
 //!     }
-//!     Err(RequestError::ValidationError { field, message }) => {
+//!     Err(RestApiError::ValidationError { field, message }) => {
 //!         eprintln!("Validation failed for {}: {}", field, message);
 //!     }
 //!     Err(e) => eprintln!("Error: {}", e),
@@ -132,7 +132,7 @@ mod error;
 // Re-exports
 pub use derive_rest_api_macros::{ApiClient, RequestBuilder};
 pub use traits::{AsyncHttpClient, HttpClient, RequestModifier, ConfigureRequest, NoRequestConfiguration};
-pub use error::RequestError;
+pub use error::RestApiError;
 
 #[cfg(feature = "reqwest-blocking")]
 pub use clients::ReqwestBlockingClient;
